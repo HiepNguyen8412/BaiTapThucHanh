@@ -1,0 +1,39 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ScanEngine", "ScanEngine\ScanEngine.vcxproj", "{2D6F7831-83C7-4B81-97F8-6CE4E43D38A1}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ScanService", "ScanService\ScanService.vcxproj", "{A23A65D8-E42A-4EA5-B7B8-3DA415667E55}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ScanClient", "ScanClient\ScanClient.vcxproj", "{7F0A729E-381A-4965-BAE2-3A4F4D575F52}"
+EndProject
+Project("{BC8A1FFA-BEE3-4634-8014-F334798102B3}") = "ScanEngineTest", "ScanEngineTest\ScanEngineTest.vcxproj", "{9E1AC930-83A2-470D-9A33-9F8AF5783B08}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2D6F7831-83C7-4B81-97F8-6CE4E43D38A1}.Debug|x64.ActiveCfg = Debug|x64
+		{2D6F7831-83C7-4B81-97F8-6CE4E43D38A1}.Debug|x64.Build.0 = Debug|x64
+		{2D6F7831-83C7-4B81-97F8-6CE4E43D38A1}.Release|x64.ActiveCfg = Release|x64
+		{2D6F7831-83C7-4B81-97F8-6CE4E43D38A1}.Release|x64.Build.0 = Release|x64
+		{A23A65D8-E42A-4EA5-B7B8-3DA415667E55}.Debug|x64.ActiveCfg = Debug|x64
+		{A23A65D8-E42A-4EA5-B7B8-3DA415667E55}.Debug|x64.Build.0 = Debug|x64
+		{A23A65D8-E42A-4EA5-B7B8-3DA415667E55}.Release|x64.ActiveCfg = Release|x64
+		{A23A65D8-E42A-4EA5-B7B8-3DA415667E55}.Release|x64.Build.0 = Release|x64
+		{7F0A729E-381A-4965-BAE2-3A4F4D575F52}.Debug|x64.ActiveCfg = Debug|x64
+		{7F0A729E-381A-4965-BAE2-3A4F4D575F52}.Debug|x64.Build.0 = Debug|x64
+		{7F0A729E-381A-4965-BAE2-3A4F4D575F52}.Release|x64.ActiveCfg = Release|x64
+		{7F0A729E-381A-4965-BAE2-3A4F4D575F52}.Release|x64.Build.0 = Release|x64
+		{9E1AC930-83A2-470D-9A33-9F8AF5783B08}.Debug|x64.ActiveCfg = Debug|x64
+		{9E1AC930-83A2-470D-9A33-9F8AF5783B08}.Debug|x64.Build.0 = Debug|x64
+		{9E1AC930-83A2-470D-9A33-9F8AF5783B08}.Release|x64.ActiveCfg = Release|x64
+		{9E1AC930-83A2-470D-9A33-9F8AF5783B08}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
