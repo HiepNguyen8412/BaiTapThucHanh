@@ -1,4 +1,10 @@
-#include "FileAnalyzer.h"
+// ============================================================================
+// MODULE : ScanEngine / Analysis
+// ROLE   : Mo file, doc block 64 KiB, tinh Shannon entropy va report progress.
+// NOTE   : File duoc sap xep lai theo kien truc module de de doc va thuyet trinh.
+// ============================================================================
+
+#include "Analysis/FileAnalyzer.h"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -10,8 +16,6 @@
 #include <cmath>
 #include <cwctype>
 #include <vector>
-
-using namespace std;
 
 namespace
 {
@@ -33,7 +37,7 @@ namespace
         }
     }
 
-    bool HasTimedOut(ULONGLONG scanStartTick, uint32_t timeoutMs)
+    bool HasTimedOut(ULONGLONG scanStartTick, std::uint32_t timeoutMs)
     {
         return timeoutMs != 0 && (GetTickCount64() - scanStartTick) >= timeoutMs;
     }
@@ -42,7 +46,7 @@ namespace
         EngineProgressCallback callback,
         void* userContext,
         EngineScanStage stage,
-        uint32_t percent,
+        std::uint32_t percent,
         const wchar_t* message)
     {
         if (callback == nullptr)
@@ -54,7 +58,7 @@ namespace
         info.apiVersion = ENGINE_API_VERSION_1;
         info.eventType = EngineEventType::Progress;
         info.stage = stage;
-        info.progressPercent = (min)(percent, 100u);
+        info.progressPercent = (std::min)(percent, 100u);
         info.status = EngineStatus::Success;
         info.result = nullptr;
         info.message = message;
@@ -71,7 +75,7 @@ namespace ScanEngineInternal
 {
     EngineStatus NormalizeFilePath(
         const wchar_t* inputPath,
-        wstring& normalizedPath,
+        std::wstring& normalizedPath,
         DWORD& win32Error)
     {
         normalizedPath.clear();
@@ -88,7 +92,7 @@ namespace ScanEngineInternal
             return EngineStatus::InvalidArgument;
         }
 
-        vector<wchar_t> buffer(static_cast<size_t>(required) + 1, L'\0');
+        std::vector<wchar_t> buffer(static_cast<std::size_t>(required) + 1, L'\0');
         const DWORD actual = GetFullPathNameW(
             inputPath,
             static_cast<DWORD>(buffer.size()),
@@ -106,12 +110,12 @@ namespace ScanEngineInternal
         }
 
         normalizedPath.assign(buffer.data(), actual);
-        replace(normalizedPath.begin(), normalizedPath.end(), L'/', L'\\');
+        std::replace(normalizedPath.begin(), normalizedPath.end(), L'/', L'\\');
         return EngineStatus::Success;
     }
 
     EngineStatus ReadFileMetadata(
-        const wstring& path,
+        const std::wstring& path,
         FileMetadata& metadata,
         DWORD& win32Error)
     {
@@ -146,13 +150,13 @@ namespace ScanEngineInternal
         return EngineStatus::Success;
     }
 
-    bool IsOutsideCDrive(const wstring& path)
+    bool IsOutsideCDrive(const std::wstring& path)
     {
         if (path.empty())
         {
             return true;
         }
-        size_t drivePosition = 0;
+        std::size_t drivePosition = 0;
         if (path.size() >= 7 &&
             path[0] == L'\\' && path[1] == L'\\' &&
             (path[2] == L'?' || path[2] == L'.') &&
@@ -167,44 +171,45 @@ namespace ScanEngineInternal
             return true;
         }
         const wchar_t driveLetter = static_cast<wchar_t>(
-            towupper(path[drivePosition]));
+            std::towupper(path[drivePosition]));
         return driveLetter != L'C';
     }
 
-    bool HasRiskyExtension(const wstring& path)
+    bool HasRiskyExtension(const std::wstring& path)
     {
         const auto slash = path.find_last_of(L"\\/");
         const auto dot = path.find_last_of(L'.');
-        if (dot == wstring::npos ||
-            (slash != wstring::npos && dot < slash))
+        if (dot == std::wstring::npos ||
+            (slash != std::wstring::npos && dot < slash))
         {
             return false;
         }
-        wstring extension = path.substr(dot);
-        transform(
+        std::wstring extension = path.substr(dot);
+        std::transform(
             extension.begin(),
             extension.end(),
             extension.begin(),
-            [](wchar_t ch) { return static_cast<wchar_t>(towlower(ch)); });
+            [](wchar_t ch) { return static_cast<wchar_t>(std::towlower(ch)); });
 
-        static const array<wstring, 6> risky{
-            L".exe", L".dll", L".sys", L".js", L".vbs", L".ps1" };
-        return find(risky.begin(), risky.end(), extension) != risky.end();
+        static const std::array<std::wstring, 6> risky{
+            L".exe", L".dll", L".sys", L".js", L".vbs", L".ps1"};
+        return std::find(risky.begin(), risky.end(), extension) != risky.end();
     }
 
-    //Hàm quan trọng
+    // Doc toi da maxBytes; moi lan doc toi da READ_BUFFER_SIZE (64 KiB).
+    // Callback duoc goi trong loop de stream progress va cooperative cancellation.
     EngineStatus CalculateFileEntropy(
-        const wstring& path,
-        uint64_t maxBytes,
+        const std::wstring& path,
+        std::uint64_t maxBytes,
         double& entropy,
         DWORD& win32Error,
         EngineProgressCallback callback,
         void* userContext,
-        uint32_t startProgress,
-        uint32_t endProgress,
-        uint32_t progressIntervalMs,
+        std::uint32_t startProgress,
+        std::uint32_t endProgress,
+        std::uint32_t progressIntervalMs,
         ULONGLONG scanStartTick,
-        uint32_t timeoutMs)
+        std::uint32_t timeoutMs)
     {
         entropy = 0.0;
         win32Error = ERROR_SUCCESS;
@@ -244,14 +249,14 @@ namespace ScanEngineInternal
             return EngineStatus::ReadFileFailed;
         }
 
-        const auto fileSize = static_cast<uint64_t>(size.QuadPart);
-        const uint64_t bytesToRead = (min)(fileSize, maxBytes); //Chỉ đọc tối đa maxBytes (mặc định 1MiB)
+        const auto fileSize = static_cast<std::uint64_t>(size.QuadPart);
+        const std::uint64_t bytesToRead = (std::min)(fileSize, maxBytes);
         if (!ReportProgress(
-            callback,
-            userContext,
-            EngineScanStage::ReadingContent,
-            startProgress,
-            L"Reading file content"))
+                callback,
+                userContext,
+                EngineScanStage::ReadingContent,
+                startProgress,
+                L"Reading file content"))
         {
             CloseHandle(file);
             return EngineStatus::Cancelled;
@@ -270,12 +275,9 @@ namespace ScanEngineInternal
                 : EngineStatus::Cancelled;
         }
 
-        // Chỉ dùng tạm thời để kiểm tra Cancel.
-        Sleep(5000);
-
-        array<uint64_t, 256> frequencies{};
-        vector<unsigned char> buffer(READ_BUFFER_SIZE);
-        uint64_t totalRead = 0;
+        std::array<std::uint64_t, 256> frequencies{};
+        std::vector<unsigned char> buffer(READ_BUFFER_SIZE);
+        std::uint64_t totalRead = 0;
         ULONGLONG lastProgressTick = GetTickCount64();
 
         while (totalRead < bytesToRead)
@@ -286,9 +288,9 @@ namespace ScanEngineInternal
                 return EngineStatus::Timeout;
             }
 
-            const uint64_t remaining = bytesToRead - totalRead;
+            const std::uint64_t remaining = bytesToRead - totalRead;
             const DWORD requestSize = static_cast<DWORD>(
-                (min)(static_cast<uint64_t>(buffer.size()), remaining));
+                (std::min)(static_cast<std::uint64_t>(buffer.size()), remaining));
             DWORD bytesRead = 0;
             if (!ReadFile(file, buffer.data(), requestSize, &bytesRead, nullptr))
             {
@@ -306,74 +308,54 @@ namespace ScanEngineInternal
             }
             totalRead += bytesRead;
 
-            // Tạm làm chậm quá trình đọc file để kiểm tra Cancel.
-            #ifdef _DEBUG
-            Sleep(5);
-            #endif
-
             const ULONGLONG now = GetTickCount64();
-
-            const bool reportNow =
-                progressIntervalMs == 0 ||
+            const bool reportNow = progressIntervalMs == 0 ||
                 now - lastProgressTick >= progressIntervalMs ||
                 totalRead >= bytesToRead;
-
             if (reportNow)
             {
-                const double ratio =
-                    static_cast<double>(totalRead) /
+                const double ratio = static_cast<double>(totalRead) /
                     static_cast<double>(bytesToRead);
-
-                const auto percent =
-                    startProgress +
-                    static_cast<uint32_t>(
-                        ratio *
-                        static_cast<double>(
-                            endProgress - startProgress));
-
-                //Báo progress và kiểm tra Cancel
+                const auto percent = startProgress + static_cast<std::uint32_t>(
+                    ratio * static_cast<double>(endProgress - startProgress));
                 if (!ReportProgress(
-                    callback,
-                    userContext,
-                    EngineScanStage::ReadingContent,
-                    (min)(percent, endProgress),
-                    L"Reading file content [CANCEL TEST]"))
+                        callback,
+                        userContext,
+                        EngineScanStage::ReadingContent,
+                        (std::min)(percent, endProgress),
+                        L"Reading and analyzing file"))
                 {
                     CloseHandle(file);
                     return EngineStatus::Cancelled;
                 }
-
                 lastProgressTick = now;
             }
+        }
+        CloseHandle(file);
 
-            CloseHandle(file);
-
-            if (totalRead == 0)
-            {
-                return EngineStatus::Success;
-            }
-            if (!ReportProgress(
+        if (totalRead == 0)
+        {
+            return EngineStatus::Success;
+        }
+        if (!ReportProgress(
                 callback,
                 userContext,
                 EngineScanStage::CalculatingEntropy,
                 endProgress,
                 L"Calculating entropy"))
-            {
-                return EngineStatus::Cancelled;
-            }
-
-            //Tính Entropy
-            double calculated = 0.0;
-            for (const auto frequency : frequencies)
-            {
-                if (frequency == 0) continue;
-                const double probability = static_cast<double>(frequency) /
-                    static_cast<double>(totalRead);
-                calculated -= probability * log2(probability);
-            }
-            entropy = calculated;
-            return EngineStatus::Success;
-
+        {
+            return EngineStatus::Cancelled;
         }
+
+        double calculated = 0.0;
+        for (const auto frequency : frequencies)
+        {
+            if (frequency == 0) continue;
+            const double probability = static_cast<double>(frequency) /
+                static_cast<double>(totalRead);
+            calculated -= probability * std::log2(probability);
+        }
+        entropy = calculated;
+        return EngineStatus::Success;
     }
 }

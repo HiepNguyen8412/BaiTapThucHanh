@@ -1,3 +1,9 @@
+// ============================================================================
+// MODULE : Common / Platform
+// ROLE   : Cai dat cac tien ich Windows dung chung.
+// NOTE   : File duoc sap xep lai theo kien truc module de de doc va thuyet trinh.
+// ============================================================================
+
 #include "WinUtil.h"
 
 #include <Lmcons.h>
@@ -5,11 +11,9 @@
 #include <iterator>
 #include <vector>
 
-using namespace std;
-
 namespace WinUtil
 {
-    wstring GetLastErrorMessage(DWORD errorCode)
+    std::wstring GetLastErrorMessage(DWORD errorCode)
     {
         wchar_t* messageBuffer = nullptr;
         const DWORD flags = FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -23,7 +27,7 @@ namespace WinUtil
             reinterpret_cast<wchar_t*>(&messageBuffer),
             0,
             nullptr);
-        wstring message;
+        std::wstring message;
         if (length != 0 && messageBuffer != nullptr)
         {
             message.assign(messageBuffer, length);
@@ -32,10 +36,10 @@ namespace WinUtil
         return message;
     }
 
-    wstring GetCurrentUserNameString()
+    std::wstring GetCurrentUserNameString()
     {
         wchar_t buffer[UNLEN + 1]{};
-        DWORD length = static_cast<DWORD>(size(buffer));
+        DWORD length = static_cast<DWORD>(std::size(buffer));
         if (GetUserNameW(buffer, &length))
         {
             return buffer;
@@ -43,9 +47,9 @@ namespace WinUtil
         return L"unknown";
     }
 
-    wstring GetExecutableDirectory()
+    std::wstring GetExecutableDirectory()
     {
-        vector<wchar_t> buffer(32768, L'\0');
+        std::vector<wchar_t> buffer(32768, L'\0');
         const DWORD length = GetModuleFileNameW(
             nullptr,
             buffer.data(),
@@ -54,12 +58,12 @@ namespace WinUtil
         {
             return L".";
         }
-        wstring path(buffer.data(), length);
+        std::wstring path(buffer.data(), length);
         const auto slash = path.find_last_of(L"\\/");
-        return slash == wstring::npos ? L"." : path.substr(0, slash);
+        return slash == std::wstring::npos ? L"." : path.substr(0, slash);
     }
 
-    wstring JoinPath(const wstring& left, const wstring& right)
+    std::wstring JoinPath(const std::wstring& left, const std::wstring& right)
     {
         if (left.empty()) return right;
         if (right.empty()) return left;
@@ -70,7 +74,7 @@ namespace WinUtil
         return left + L"\\" + right;
     }
 
-    wstring NormalizePath(const wstring& path, DWORD& errorCode)
+    std::wstring NormalizePath(const std::wstring& path, DWORD& errorCode)
     {
         errorCode = ERROR_SUCCESS;
         if (path.empty())
@@ -84,7 +88,7 @@ namespace WinUtil
             errorCode = GetLastError();
             return {};
         }
-        vector<wchar_t> buffer(static_cast<size_t>(required) + 1, L'\0');
+        std::vector<wchar_t> buffer(static_cast<std::size_t>(required) + 1, L'\0');
         DWORD actual = GetFullPathNameW(
             path.c_str(),
             static_cast<DWORD>(buffer.size()),
@@ -95,7 +99,7 @@ namespace WinUtil
             errorCode = actual == 0 ? GetLastError() : ERROR_INSUFFICIENT_BUFFER;
             return {};
         }
-        wstring result(buffer.data(), actual);
+        std::wstring result(buffer.data(), actual);
         for (auto& ch : result)
         {
             if (ch == L'/') ch = L'\\';
@@ -105,9 +109,9 @@ namespace WinUtil
     }
 
     bool GetFileIdentity(
-        const wstring& path,
-        uint64_t& fileSize,
-        uint64_t& lastWriteTime,
+        const std::wstring& path,
+        std::uint64_t& fileSize,
+        std::uint64_t& lastWriteTime,
         DWORD& errorCode)
     {
         fileSize = 0;

@@ -1,7 +1,12 @@
-//File định nghĩa hợp đồng
+// ============================================================================
+// MODULE : ScanEngine / Analysis
+// ROLE   : Khai bao helper xu ly path, metadata, extension va entropy.
+// NOTE   : File duoc sap xep lai theo kien truc module de de doc va thuyet trinh.
+// ============================================================================
+
 #pragma once
 
-#include "../Common/EngineApi.h"
+#include "Api/EngineApi.h"
 
 #include <Windows.h>
 #include <cstdint>

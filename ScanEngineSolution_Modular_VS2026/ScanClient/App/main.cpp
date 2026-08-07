@@ -1,10 +1,16 @@
+// ============================================================================
+// MODULE : ScanClient / App
+// ROLE   : Diem vao CLI: parse lenh, ket noi Service, gui request va nhan event streaming.
+// NOTE   : File duoc sap xep lai theo kien truc module de de doc va thuyet trinh.
+// ============================================================================
+
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <Windows.h>
 
-#include "../Common/Protocol.h"
-#include "../Common/WinUtil.h"
+#include "Protocol/Protocol.h"
+#include "Platform/WinUtil.h"
 
 #include <algorithm>
 #include <atomic>
@@ -15,14 +21,12 @@
 #include <thread>
 #include <vector>
 
-using namespace std;
-
 namespace
 {
-    atomic_uint64_t g_requestId{1};
-    mutex g_consoleMutex;
+    std::atomic_uint64_t g_requestId{1};
+    std::mutex g_consoleMutex;
 
-    const wchar_t* JobStateText(uint32_t state)
+    const wchar_t* JobStateText(std::uint32_t state)
     {
         switch (state)
         {
@@ -36,7 +40,7 @@ namespace
         }
     }
 
-    const wchar_t* VerdictText(uint32_t verdict)
+    const wchar_t* VerdictText(std::uint32_t verdict)
     {
         switch (verdict)
         {
@@ -47,21 +51,18 @@ namespace
         }
     }
 
-    uint32_t ParsePriority(const wstring& text)
+    std::uint32_t ParsePriority(const std::wstring& text)
     {
         if (_wcsicmp(text.c_str(), L"high") == 0) return 2;
         if (_wcsicmp(text.c_str(), L"low") == 0) return 0;
         return 1;
     }
 
+    // Ket noi toi Named Pipe do ScanService tao.
+    // Retry cao hon de lenh stress nhieu session khong bi ERROR_PIPE_BUSY qua som.
     HANDLE ConnectPipe()
     {
-        constexpr int MAX_ATTEMPTS = 100;
-        constexpr DWORD WAIT_TIME_MS = 500;
-
-        for (int attempt = 0;
-            attempt < MAX_ATTEMPTS;
-            ++attempt)
+        for (int attempt = 0; attempt < 100; ++attempt)
         {
             HANDLE pipe = CreateFileW(
                 AvProtocol::PIPE_NAME,
@@ -71,36 +72,10 @@ namespace
                 OPEN_EXISTING,
                 0,
                 nullptr);
-
-            if (pipe != INVALID_HANDLE_VALUE)
-            {
-                return pipe;
-            }
-
-            const DWORD error = GetLastError();
-
-            if (error == ERROR_PIPE_BUSY)
-            {
-                // Chờ một pipe instance rảnh rồi thử kết nối lại.
-                WaitNamedPipeW(
-                    AvProtocol::PIPE_NAME,
-                    WAIT_TIME_MS);
-
-                continue;
-            }
-
-            if (error == ERROR_FILE_NOT_FOUND)
-            {
-                // Service có thể đang khởi động và chưa tạo pipe.
-                Sleep(100);
-                continue;
-            }
-
-            SetLastError(error);
-            return INVALID_HANDLE_VALUE;
+            if (pipe != INVALID_HANDLE_VALUE) return pipe;
+            if (GetLastError() != ERROR_PIPE_BUSY) return INVALID_HANDLE_VALUE;
+            WaitNamedPipeW(AvProtocol::PIPE_NAME, 2000);
         }
-
-        SetLastError(ERROR_PIPE_BUSY);
         return INVALID_HANDLE_VALUE;
     }
 
@@ -133,15 +108,15 @@ namespace
         pipe = ConnectPipe();
         if (pipe == INVALID_HANDLE_VALUE)
         {
-            lock_guard lock(g_consoleMutex);
-            wcerr << L"Cannot connect to " << AvProtocol::PIPE_NAME
+            std::lock_guard lock(g_consoleMutex);
+            std::wcerr << L"Cannot connect to " << AvProtocol::PIPE_NAME
                 << L". Start ScanService first. Error=" << GetLastError() << L'\n';
             return false;
         }
         if (!SendHello(pipe))
         {
-            lock_guard lock(g_consoleMutex);
-            wcerr << L"HELLO/WELCOME handshake failed.\n";
+            std::lock_guard lock(g_consoleMutex);
+            std::wcerr << L"HELLO/WELCOME handshake failed.\n";
             CloseHandle(pipe);
             pipe = INVALID_HANDLE_VALUE;
             return false;
@@ -152,22 +127,22 @@ namespace
     void PrintError(const AvProtocol::Message& message)
     {
         AvProtocol::TlvReader reader(message.payload);
-        uint32_t code = 0;
-        wstring text;
+        std::uint32_t code = 0;
+        std::wstring text;
         reader.GetU32(AvProtocol::FieldType::ErrorCode, code);
         reader.GetWide(AvProtocol::FieldType::Message, text);
-        lock_guard lock(g_consoleMutex);
-        wcerr << L"[ERROR] code=" << code << L" " << text << L'\n';
+        std::lock_guard lock(g_consoleMutex);
+        std::wcerr << L"[ERROR] code=" << code << L" " << text << L'\n';
     }
 
-    uint32_t PrintJobMessage(const AvProtocol::Message& message, bool compact)
+    std::uint32_t PrintJobMessage(const AvProtocol::Message& message, bool compact)
     {
         AvProtocol::TlvReader reader(message.payload);
-        uint64_t jobId = 0;
-        uint32_t state = 0;
-        uint32_t progress = 0;
-        uint32_t stage = 0;
-        wstring text;
+        std::uint64_t jobId = 0;
+        std::uint32_t state = 0;
+        std::uint32_t progress = 0;
+        std::uint32_t stage = 0;
+        std::wstring text;
         bool cacheHit = false;
         reader.GetU64(AvProtocol::FieldType::JobId, jobId);
         reader.GetU32(AvProtocol::FieldType::JobStatus, state);
@@ -176,11 +151,11 @@ namespace
         reader.GetWide(AvProtocol::FieldType::Message, text);
         reader.GetBool(AvProtocol::FieldType::CacheHit, cacheHit);
 
-        uint32_t verdict = 0;
-        uint32_t riskScore = 0;
-        uint32_t rules = 0;
-        uint64_t fileSize = 0;
-        uint64_t duration = 0;
+        std::uint32_t verdict = 0;
+        std::uint32_t riskScore = 0;
+        std::uint32_t rules = 0;
+        std::uint64_t fileSize = 0;
+        std::uint64_t duration = 0;
         double entropy = 0.0;
         const bool hasVerdict = reader.GetU32(AvProtocol::FieldType::Verdict, verdict);
         reader.GetU32(AvProtocol::FieldType::RiskScore, riskScore);
@@ -189,30 +164,30 @@ namespace
         reader.GetU64(AvProtocol::FieldType::DurationMs, duration);
         reader.GetDouble(AvProtocol::FieldType::Entropy, entropy);
 
-        lock_guard lock(g_consoleMutex);
+        std::lock_guard lock(g_consoleMutex);
         if (compact)
         {
             if (state == 3 || state == 4 || state == 5)
             {
-                wcout << L"job=" << jobId << L" " << JobStateText(state);
-                if (hasVerdict) wcout << L" verdict=" << VerdictText(verdict);
-                if (cacheHit) wcout << L" cache=HIT";
-                wcout << L'\n';
+                std::wcout << L"job=" << jobId << L" " << JobStateText(state);
+                if (hasVerdict) std::wcout << L" verdict=" << VerdictText(verdict);
+                if (cacheHit) std::wcout << L" cache=HIT";
+                std::wcout << L'\n';
             }
             return state;
         }
 
-        wcout << L"[job " << jobId << L"] " << JobStateText(state)
+        std::wcout << L"[job " << jobId << L"] " << JobStateText(state)
             << L" " << progress << L"% stage=" << stage;
-        if (!text.empty()) wcout << L" - " << text;
-        if (cacheHit) wcout << L" [CACHE HIT]";
-        wcout << L'\n';
+        if (!text.empty()) std::wcout << L" - " << text;
+        if (cacheHit) std::wcout << L" [CACHE HIT]";
+        std::wcout << L'\n';
 
         if (hasVerdict)
         {
-            wcout << L"  verdict=" << VerdictText(verdict)
+            std::wcout << L"  verdict=" << VerdictText(verdict)
                 << L", score=" << riskScore
-                << L", rules=0x" << hex << rules << dec
+                << L", rules=0x" << std::hex << rules << std::dec
                 << L", size=" << fileSize
                 << L", entropy=" << entropy
                 << L", durationMs=" << duration << L'\n';
@@ -220,10 +195,12 @@ namespace
         return state;
     }
 
+    // MAIN CLIENT FLOW:
+    // OpenSession -> gui SCAN -> nhan ACK(jobId) -> nhan EVENT cho den terminal state.
     int ScanCommand(
-        const wstring& path,
-        uint32_t priority,
-        uint32_t timeoutMs,
+        const std::wstring& path,
+        std::uint32_t priority,
+        std::uint32_t timeoutMs,
         bool compact = false)
     {
         HANDLE pipe = INVALID_HANDLE_VALUE;
@@ -246,7 +223,7 @@ namespace
             return 1;
         }
 
-        uint64_t jobId = 0;
+        std::uint64_t jobId = 0;
         bool terminal = false;
         int exitCode = 1;
         while (!terminal)
@@ -265,19 +242,19 @@ namespace
                 reader.GetU64(AvProtocol::FieldType::JobId, jobId);
                 if (!compact)
                 {
-                    lock_guard lock(g_consoleMutex);
-                    wcout << L"SCAN accepted. jobId=" << jobId << L'\n';
+                    std::lock_guard lock(g_consoleMutex);
+                    std::wcout << L"SCAN accepted. jobId=" << jobId << L'\n';
                 }
                 continue;
             }
             if (type == AvProtocol::MessageType::Event)
             {
                 AvProtocol::TlvReader reader(message.payload);
-                uint64_t eventJobId = 0;
+                std::uint64_t eventJobId = 0;
                 reader.GetU64(AvProtocol::FieldType::JobId, eventJobId);
                 if (jobId == 0) jobId = eventJobId;
                 if (eventJobId != jobId) continue;
-                const uint32_t state = PrintJobMessage(message, compact);
+                const std::uint32_t state = PrintJobMessage(message, compact);
                 terminal = state == 3 || state == 4 || state == 5;
                 exitCode = state == 3 ? 0 : 2;
             }
@@ -286,7 +263,7 @@ namespace
         return exitCode;
     }
 
-    int QueryOrCancelCommand(bool cancel, uint64_t jobId)
+    int QueryOrCancelCommand(bool cancel, std::uint64_t jobId)
     {
         HANDLE pipe = INVALID_HANDLE_VALUE;
         if (!OpenSession(pipe)) return 1;
@@ -312,9 +289,9 @@ namespace
         else
         {
             AvProtocol::TlvReader reader(response.payload);
-            wstring text;
+            std::wstring text;
             reader.GetWide(AvProtocol::FieldType::Message, text);
-            wcout << text << L'\n';
+            std::wcout << text << L'\n';
         }
         CloseHandle(pipe);
         return type == AvProtocol::MessageType::Error ? 1 : 0;
@@ -345,8 +322,8 @@ namespace
             return 1;
         }
         AvProtocol::TlvReader reader(response.payload);
-        uint64_t received = 0, success = 0, failed = 0, cancelled = 0;
-        uint64_t hits = 0, pending = 0, running = 0;
+        std::uint64_t received = 0, success = 0, failed = 0, cancelled = 0;
+        std::uint64_t hits = 0, pending = 0, running = 0;
         double average = 0.0, p95 = 0.0;
         reader.GetU64(AvProtocol::FieldType::TotalReceived, received);
         reader.GetU64(AvProtocol::FieldType::TotalSucceeded, success);
@@ -357,7 +334,7 @@ namespace
         reader.GetU64(AvProtocol::FieldType::Running, running);
         reader.GetDouble(AvProtocol::FieldType::AverageMs, average);
         reader.GetDouble(AvProtocol::FieldType::P95Ms, p95);
-        wcout << L"received=" << received << L", success=" << success
+        std::wcout << L"received=" << received << L", success=" << success
             << L", failed=" << failed << L", cancelled=" << cancelled
             << L", cacheHits=" << hits << L", pending=" << pending
             << L", running=" << running << L", averageMs=" << average
@@ -368,7 +345,7 @@ namespace
 
     void Usage()
     {
-        wcout
+        std::wcout
             << L"Usage:\n"
             << L"  ScanClient.exe scan <path> [--priority low|normal|high] [--timeout ms]\n"
             << L"  ScanClient.exe query <jobId>\n"
@@ -378,6 +355,8 @@ namespace
     }
 }
 
+// Entry point duy nhat cua ScanClient.
+// wmain chi phan tich command, logic giao tiep nam trong cac ham phia tren.
 int wmain(int argc, wchar_t* argv[])
 {
     if (argc < 2)
@@ -386,16 +365,16 @@ int wmain(int argc, wchar_t* argv[])
         return 1;
     }
 
-    const wstring command = argv[1];
+    const std::wstring command = argv[1];
     if (_wcsicmp(command.c_str(), L"scan") == 0 && argc >= 3)
     {
-        uint32_t priority = 1;
-        uint32_t timeoutMs = 0;
+        std::uint32_t priority = 1;
+        std::uint32_t timeoutMs = 0;
         for (int i = 3; i < argc; ++i)
         {
-            const wstring option = argv[i];
+            const std::wstring option = argv[i];
             if (option == L"--priority" && i + 1 < argc) priority = ParsePriority(argv[++i]);
-            else if (option == L"--timeout" && i + 1 < argc) timeoutMs = static_cast<uint32_t>(_wtoi(argv[++i]));
+            else if (option == L"--timeout" && i + 1 < argc) timeoutMs = static_cast<std::uint32_t>(_wtoi(argv[++i]));
         }
         return ScanCommand(argv[2], priority, timeoutMs);
     }
@@ -414,15 +393,15 @@ int wmain(int argc, wchar_t* argv[])
     if (_wcsicmp(command.c_str(), L"stress") == 0 && argc >= 3)
     {
         int count = 20;
-        uint32_t priority = 0;
+        std::uint32_t priority = 0;
         for (int i = 3; i < argc; ++i)
         {
-            const wstring option = argv[i];
-            if (option == L"--count" && i + 1 < argc) count = (max)(1, _wtoi(argv[++i]));
+            const std::wstring option = argv[i];
+            if (option == L"--count" && i + 1 < argc) count = (std::max)(1, _wtoi(argv[++i]));
             else if (option == L"--priority" && i + 1 < argc) priority = ParsePriority(argv[++i]);
         }
-        vector<thread> threads;
-        atomic_int failures{0};
+        std::vector<std::thread> threads;
+        std::atomic_int failures{0};
         for (int i = 0; i < count; ++i)
         {
             threads.emplace_back([&, i]
@@ -432,7 +411,7 @@ int wmain(int argc, wchar_t* argv[])
             });
         }
         for (auto& thread : threads) thread.join();
-        wcout << L"Stress completed. count=" << count << L", failures=" << failures.load() << L'\n';
+        std::wcout << L"Stress completed. count=" << count << L", failures=" << failures.load() << L'\n';
         return failures.load() == 0 ? 0 : 2;
     }
 

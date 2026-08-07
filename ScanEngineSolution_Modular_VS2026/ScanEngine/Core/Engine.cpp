@@ -1,5 +1,11 @@
-#include "../Common/EngineApi.h"
-#include "FileAnalyzer.h"
+// ============================================================================
+// MODULE : ScanEngine / Core
+// ROLE   : Public Engine API; orchestration scan, rule scoring, result callback.
+// NOTE   : File duoc sap xep lai theo kien truc module de de doc va thuyet trinh.
+// ============================================================================
+
+#include "Api/EngineApi.h"
+#include "Analysis/FileAnalyzer.h"
 
 #include <Windows.h>
 #include <atomic>
@@ -9,35 +15,31 @@
 #include <mutex>
 #include <string>
 
-using namespace std;
-
-//Biến dùng và hàm bên trong chỉ dùng trong file,
-//Không cho phép truy cập trực tiếp 
 namespace
 {
-    atomic_bool g_initialized{false}; //Kiểm tra trạng thái khởi tạo Engine
-    constexpr uint64_t LARGE_FILE_THRESHOLD = 50ull * 1024ull * 1024ull;
+    std::atomic_bool g_initialized{false};
+    constexpr std::uint64_t LARGE_FILE_THRESHOLD = 50ull * 1024ull * 1024ull;
 
     struct EngineConfig
     {
         double entropyThreshold{7.2};
-        uint64_t maxEntropyBytes{1024ull * 1024ull};
-        uint32_t progressIntervalMs{100};
+        std::uint64_t maxEntropyBytes{1024ull * 1024ull};
+        std::uint32_t progressIntervalMs{100};
     };
 
     EngineConfig g_config{};
-    mutex g_configMutex;
+    std::mutex g_configMutex;
 
     bool TryReadJsonNumber(const char* json, const char* key, double& value)
     {
         if (json == nullptr || key == nullptr) return false;
-        const string quotedKey = string("\"") + key + "\"";
-        const char* keyPosition = strstr(json, quotedKey.c_str());
+        const std::string quotedKey = std::string("\"") + key + "\"";
+        const char* keyPosition = std::strstr(json, quotedKey.c_str());
         if (keyPosition == nullptr) return false;
-        const char* colon = strchr(keyPosition + quotedKey.size(), ':');
+        const char* colon = std::strchr(keyPosition + quotedKey.size(), ':');
         if (colon == nullptr) return false;
         char* end = nullptr;
-        const double parsed = strtod(colon + 1, &end);
+        const double parsed = std::strtod(colon + 1, &end);
         if (end == colon + 1) return false;
         value = parsed;
         return true;
@@ -48,7 +50,7 @@ namespace
         void* userContext,
         EngineEventType eventType,
         EngineScanStage stage,
-        uint32_t progress,
+        std::uint32_t progress,
         EngineStatus status,
         const wchar_t* message,
         const EngineScanResultV1* result = nullptr)
@@ -85,8 +87,7 @@ namespace
         return status;
     }
 
-    //Map điểm thành verdict
-    EngineVerdict MapVerdict(uint32_t score)
+    EngineVerdict MapVerdict(std::uint32_t score)
     {
         if (score <= 1) return EngineVerdict::Safe;
         if (score <= 3) return EngineVerdict::Suspicious;
@@ -97,12 +98,11 @@ namespace
 SCANENGINE_API EngineStatus WINAPI EngineInitialize(const char* configJsonUtf8)
 {
     bool expected = false;
-    if (!g_initialized.compare_exchange_strong(expected, true)) //Nếu g_initialized == false thì compare_exchange_strong đổi thành true tiếp tục khởi tạo
+    if (!g_initialized.compare_exchange_strong(expected, true))
     {
-        return EngineStatus::AlreadyInitialized; // g_initialized == true 
+        return EngineStatus::AlreadyInitialized;
     }
 
-    //Tạo cấu hình mặc định
     EngineConfig config{};
     if (configJsonUtf8 != nullptr && configJsonUtf8[0] != '\0')
     {
@@ -123,7 +123,7 @@ SCANENGINE_API EngineStatus WINAPI EngineInitialize(const char* configJsonUtf8)
                 g_initialized.store(false);
                 return EngineStatus::InvalidArgument;
             }
-            config.maxEntropyBytes = static_cast<uint64_t>(number);
+            config.maxEntropyBytes = static_cast<std::uint64_t>(number);
         }
         if (TryReadJsonNumber(configJsonUtf8, "progressIntervalMs", number))
         {
@@ -132,16 +132,15 @@ SCANENGINE_API EngineStatus WINAPI EngineInitialize(const char* configJsonUtf8)
                 g_initialized.store(false);
                 return EngineStatus::InvalidArgument;
             }
-            config.progressIntervalMs = static_cast<uint32_t>(number);
+            config.progressIntervalMs = static_cast<std::uint32_t>(number);
         }
     }
 
-    //Lưu vào config rồi trả về Enginestatus::Success;
     {
-        lock_guard lock(g_configMutex);
+        std::lock_guard lock(g_configMutex);
         g_config = config;
     }
-    return EngineStatus::Success; 
+    return EngineStatus::Success;
 }
 
 SCANENGINE_API const char* WINAPI EngineGetVersion()
@@ -149,13 +148,15 @@ SCANENGINE_API const char* WINAPI EngineGetVersion()
     return ENGINE_VERSION_STRING;
 }
 
+// MAIN ENGINE FLOW:
+// validate -> normalize -> metadata -> entropy -> rules -> result -> callback 100%.
+// Tat ca chay tren worker thread cua Service; DLL khong tao worker rieng.
 SCANENGINE_API EngineStatus WINAPI EngineScanFile(
     const wchar_t* path,
     const EngineScanOptionsV1* options,
     EngineProgressCallback callback,
     void* userContext)
 {
-    //Không gọi EngineScanFile trước EngineInitialize
     if (!g_initialized.load())
     {
         return EngineStatus::NotInitialized;
@@ -172,20 +173,18 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
     {
         return EngineStatus::InvalidApiVersion;
     }
-
-    //Lấy cấu hình
     EngineConfig config{};
     {
-        lock_guard lock(g_configMutex); // option có giá trị thì dùng option còn không thì mặc định
+        std::lock_guard lock(g_configMutex);
         config = g_config;
     }
     const double entropyThreshold = options->entropyThreshold > 0.0
         ? options->entropyThreshold
         : config.entropyThreshold;
-    const uint64_t maxEntropyBytes = options->maxEntropyBytes != 0
+    const std::uint64_t maxEntropyBytes = options->maxEntropyBytes != 0
         ? options->maxEntropyBytes
         : config.maxEntropyBytes;
-    const uint32_t progressIntervalMs = options->progressIntervalMs != 0
+    const std::uint32_t progressIntervalMs = options->progressIntervalMs != 0
         ? options->progressIntervalMs
         : config.progressIntervalMs;
     if (maxEntropyBytes == 0 || entropyThreshold <= 0.0 || entropyThreshold > 8.0)
@@ -193,7 +192,6 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
         return EngineStatus::InvalidArgument;
     }
 
-    //Đo thời gian
     const ULONGLONG startTick = GetTickCount64();
     if (!ReportEvent(
             callback,
@@ -209,8 +207,7 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
     }
 
     DWORD win32Error = ERROR_SUCCESS;
-    //Chuyển hướng sang FileAnalyzerd.cpp -> NormalizeFilePath()
-    wstring normalizedPath;
+    std::wstring normalizedPath;
     EngineStatus status = ScanEngineInternal::NormalizeFilePath(
         path, normalizedPath, win32Error);
     if (status != EngineStatus::Success)
@@ -218,7 +215,6 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
         return FinishWithError(callback, userContext, status, L"Invalid file path");
     }
 
-    //Báo Starting 5%
     if (!ReportEvent(
             callback,
             userContext,
@@ -261,8 +257,8 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
         win32Error,
         callback,
         userContext,
-        20, //Bắt đầu của giai đoạn đọc
-        75, // process kết thúc
+        20,
+        75,
         progressIntervalMs,
         startTick,
         options->timeoutMs);
@@ -289,9 +285,8 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
             callback, userContext, EngineStatus::Cancelled, L"Scan cancelled");
     }
 
-    //Sau khi CalculateFileEntropy() trả Success, Engine.cpp báo 85% tạo:
-    uint32_t score = 0;
-    uint32_t rules = ENGINE_RULE_NONE;
+    std::uint32_t score = 0;
+    std::uint32_t rules = ENGINE_RULE_NONE;
     if (ScanEngineInternal::IsOutsideCDrive(normalizedPath))
     {
         score += 2;
@@ -326,7 +321,6 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
             callback, userContext, EngineStatus::Cancelled, L"Scan cancelled");
     }
 
-    //Tạo kết quả......Trước hết báo 95%
     EngineScanResultV1 result{};
     result.structSize = sizeof(result);
     result.apiVersion = ENGINE_API_VERSION_1;
@@ -344,7 +338,7 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
         : result.verdict == EngineVerdict::Suspicious
             ? L"SUSPICIOUS"
             : L"MALICIOUS";
-    swprintf_s( //Chuỗi mô tả
+    swprintf_s(
         result.description,
         _countof(result.description),
         L"Verdict=%ls, score=%u, rules=0x%08X, entropy=%.3f",
@@ -353,7 +347,6 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
         result.matchedRules,
         result.entropy);
 
-        //Gửi kết quả cuối qua Callback
     if (!ReportEvent(
             callback,
             userContext,
@@ -372,6 +365,6 @@ SCANENGINE_API EngineStatus WINAPI EngineScanFile(
 SCANENGINE_API void WINAPI EngineShutdown()
 {
     g_initialized.store(false);
-    lock_guard lock(g_configMutex);
+    std::lock_guard lock(g_configMutex);
     g_config = EngineConfig{};
 }

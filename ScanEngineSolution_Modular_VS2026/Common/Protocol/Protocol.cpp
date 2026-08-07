@@ -1,42 +1,46 @@
+// ============================================================================
+// MODULE : Common / Protocol
+// ROLE   : Serialize/deserialize message va doc/ghi byte qua Named Pipe.
+// NOTE   : File duoc sap xep lai theo kien truc module de de doc va thuyet trinh.
+// ============================================================================
+
 #include "Protocol.h"
 
 #include <cstring>
 #include <limits>
-
-using namespace std;
 
 namespace AvProtocol
 {
     namespace
     {
         template <typename T>
-        void AppendPod(vector<uint8_t>& output, const T& value)
+        void AppendPod(std::vector<std::uint8_t>& output, const T& value)
         {
-            const auto* bytes = reinterpret_cast<const uint8_t*>(&value);
+            const auto* bytes = reinterpret_cast<const std::uint8_t*>(&value);
             output.insert(output.end(), bytes, bytes + sizeof(T));
         }
     }
 
-    void TlvWriter::AddBytes(FieldType type, const void* data, uint32_t length)
+    void TlvWriter::AddBytes(FieldType type, const void* data, std::uint32_t length)
     {
         TlvHeader header{};
-        header.type = static_cast<uint16_t>(type);
+        header.type = static_cast<std::uint16_t>(type);
         header.length = length;
         AppendPod(data_, header);
 
         if (length != 0 && data != nullptr)
         {
-            const auto* bytes = static_cast<const uint8_t*>(data);
+            const auto* bytes = static_cast<const std::uint8_t*>(data);
             data_.insert(data_.end(), bytes, bytes + length);
         }
     }
 
-    void TlvWriter::AddU32(FieldType type, uint32_t value)
+    void TlvWriter::AddU32(FieldType type, std::uint32_t value)
     {
         AddBytes(type, &value, sizeof(value));
     }
 
-    void TlvWriter::AddU64(FieldType type, uint64_t value)
+    void TlvWriter::AddU64(FieldType type, std::uint64_t value)
     {
         AddBytes(type, &value, sizeof(value));
     }
@@ -48,32 +52,32 @@ namespace AvProtocol
 
     void TlvWriter::AddBool(FieldType type, bool value)
     {
-        const uint32_t encoded = value ? 1u : 0u;
+        const std::uint32_t encoded = value ? 1u : 0u;
         AddU32(type, encoded);
     }
 
-    void TlvWriter::AddUtf8(FieldType type, const string& value)
+    void TlvWriter::AddUtf8(FieldType type, const std::string& value)
     {
-        AddBytes(type, value.data(), static_cast<uint32_t>(value.size()));
+        AddBytes(type, value.data(), static_cast<std::uint32_t>(value.size()));
     }
 
-    void TlvWriter::AddWide(FieldType type, const wstring& value)
+    void TlvWriter::AddWide(FieldType type, const std::wstring& value)
     {
         const auto byteCount = value.size() * sizeof(wchar_t);
-        if (byteCount > numeric_limits<uint32_t>::max())
+        if (byteCount > std::numeric_limits<std::uint32_t>::max())
         {
             return;
         }
-        AddBytes(type, value.data(), static_cast<uint32_t>(byteCount));
+        AddBytes(type, value.data(), static_cast<std::uint32_t>(byteCount));
     }
 
-    TlvReader::TlvReader(const vector<uint8_t>& payload)
+    TlvReader::TlvReader(const std::vector<std::uint8_t>& payload)
     {
-        size_t offset = 0;
+        std::size_t offset = 0;
         while (offset + sizeof(TlvHeader) <= payload.size())
         {
             TlvHeader header{};
-            memcpy(&header, payload.data() + offset, sizeof(header));
+            std::memcpy(&header, payload.data() + offset, sizeof(header));
             offset += sizeof(header);
 
             if (header.length > payload.size() - offset)
@@ -107,25 +111,25 @@ namespace AvProtocol
         return nullptr;
     }
 
-    bool TlvReader::GetU32(FieldType type, uint32_t& value) const
+    bool TlvReader::GetU32(FieldType type, std::uint32_t& value) const
     {
         const auto* field = Find(type);
         if (field == nullptr || field->length != sizeof(value))
         {
             return false;
         }
-        memcpy(&value, field->data, sizeof(value));
+        std::memcpy(&value, field->data, sizeof(value));
         return true;
     }
 
-    bool TlvReader::GetU64(FieldType type, uint64_t& value) const
+    bool TlvReader::GetU64(FieldType type, std::uint64_t& value) const
     {
         const auto* field = Find(type);
         if (field == nullptr || field->length != sizeof(value))
         {
             return false;
         }
-        memcpy(&value, field->data, sizeof(value));
+        std::memcpy(&value, field->data, sizeof(value));
         return true;
     }
 
@@ -136,13 +140,13 @@ namespace AvProtocol
         {
             return false;
         }
-        memcpy(&value, field->data, sizeof(value));
+        std::memcpy(&value, field->data, sizeof(value));
         return true;
     }
 
     bool TlvReader::GetBool(FieldType type, bool& value) const
     {
-        uint32_t encoded = 0;
+        std::uint32_t encoded = 0;
         if (!GetU32(type, encoded))
         {
             return false;
@@ -151,7 +155,7 @@ namespace AvProtocol
         return true;
     }
 
-    bool TlvReader::GetUtf8(FieldType type, string& value) const
+    bool TlvReader::GetUtf8(FieldType type, std::string& value) const
     {
         const auto* field = Find(type);
         if (field == nullptr)
@@ -162,7 +166,7 @@ namespace AvProtocol
         return true;
     }
 
-    bool TlvReader::GetWide(FieldType type, wstring& value) const
+    bool TlvReader::GetWide(FieldType type, std::wstring& value) const
     {
         const auto* field = Find(type);
         if (field == nullptr || (field->length % sizeof(wchar_t)) != 0)
@@ -178,7 +182,7 @@ namespace AvProtocol
     bool ReadExact(HANDLE handle, void* buffer, DWORD bytes, DWORD& errorCode)
     {
         errorCode = ERROR_SUCCESS;
-        auto* output = static_cast<uint8_t*>(buffer);
+        auto* output = static_cast<std::uint8_t*>(buffer);
         DWORD total = 0;
         while (total < bytes)
         {
@@ -201,7 +205,7 @@ namespace AvProtocol
     bool WriteExact(HANDLE handle, const void* buffer, DWORD bytes, DWORD& errorCode)
     {
         errorCode = ERROR_SUCCESS;
-        const auto* input = static_cast<const uint8_t*>(buffer);
+        const auto* input = static_cast<const std::uint8_t*>(buffer);
         DWORD total = 0;
         while (total < bytes)
         {
@@ -250,15 +254,15 @@ namespace AvProtocol
     bool WriteMessage(
         HANDLE pipe,
         MessageType type,
-        uint64_t requestId,
+        std::uint64_t requestId,
         const TlvWriter& payload,
         DWORD& errorCode)
     {
         MessageHeader header{};
         header.magic = MAGIC;
         header.version = VERSION;
-        header.type = static_cast<uint16_t>(type);
-        header.payloadSize = static_cast<uint32_t>(payload.Data().size());
+        header.type = static_cast<std::uint16_t>(type);
+        header.payloadSize = static_cast<std::uint32_t>(payload.Data().size());
         header.requestId = requestId;
 
         if (!WriteExact(pipe, &header, sizeof(header), errorCode))

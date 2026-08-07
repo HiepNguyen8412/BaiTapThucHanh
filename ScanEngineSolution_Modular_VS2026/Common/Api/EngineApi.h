@@ -1,3 +1,9 @@
+// ============================================================================
+// MODULE : Common / API
+// ROLE   : Hop dong chung giua ScanService va ScanEngine.dll (status, options, callback, result).
+// NOTE   : File duoc sap xep lai theo kien truc module de de doc va thuyet trinh.
+// ============================================================================
+
 #pragma once
 
 #include <Windows.h>
@@ -15,8 +21,7 @@
 #define SCANENGINE_API extern "C"
 #endif
 
-//Trạng thái trả về
-enum class EngineStatus : uint32_t
+enum class EngineStatus : std::uint32_t
 {
     Success = 0,
     InvalidArgument,
@@ -33,7 +38,7 @@ enum class EngineStatus : uint32_t
     InternalError
 };
 
-enum class EngineEventType : uint32_t
+enum class EngineEventType : std::uint32_t
 {
     Progress = 0,
     Result,
@@ -41,8 +46,7 @@ enum class EngineEventType : uint32_t
     Cancelled
 };
 
-//các giai đoạn sau khi Scan
-enum class EngineScanStage : uint32_t
+enum class EngineScanStage : std::uint32_t
 {
     Starting = 0,
     OpeningFile,
@@ -56,14 +60,14 @@ enum class EngineScanStage : uint32_t
     Failed
 };
 
-enum class EngineVerdict : uint32_t
+enum class EngineVerdict : std::uint32_t
 {
     Safe = 0,
     Suspicious,
     Malicious
 };
 
-enum EngineRuleFlags : uint32_t
+enum EngineRuleFlags : std::uint32_t
 {
     ENGINE_RULE_NONE = 0x00000000,
     ENGINE_RULE_OUTSIDE_C_DRIVE = 0x00000001,
@@ -72,48 +76,44 @@ enum EngineRuleFlags : uint32_t
     ENGINE_RULE_HIGH_ENTROPY = 0x00000008
 };
 
-//Tham số Scan
 struct EngineScanOptionsV1
 {
-    uint32_t structSize;
-    uint32_t apiVersion;
-    uint32_t timeoutMs;          // 0 = no timeout
+    std::uint32_t structSize;
+    std::uint32_t apiVersion;
+    std::uint32_t timeoutMs;          // 0 = no timeout
     double entropyThreshold;          // Recommended demo value: 7.2
-    uint64_t maxEntropyBytes;    // Recommended demo value: 1 MiB
-    uint32_t progressIntervalMs; // 0 = report every read chunk
-    uint32_t reserved;
+    std::uint64_t maxEntropyBytes;    // Recommended demo value: 1 MiB
+    std::uint32_t progressIntervalMs; // 0 = report every read chunk
+    std::uint32_t reserved;
 };
 
-
-//Kết quả Scan
 struct EngineScanResultV1
 {
-    uint32_t structSize;
-    uint32_t apiVersion;
+    std::uint32_t structSize;
+    std::uint32_t apiVersion;
     EngineVerdict verdict;
-    uint32_t riskScore;
-    uint32_t matchedRules;
-    uint32_t win32Error;
-    uint64_t fileSize;
-    uint64_t lastWriteTime;
+    std::uint32_t riskScore;
+    std::uint32_t matchedRules;
+    std::uint32_t win32Error;
+    std::uint64_t fileSize;
+    std::uint64_t lastWriteTime;
     double entropy;
-    uint64_t scanDurationMs;
+    std::uint64_t scanDurationMs;
     wchar_t description[256];
 };
 
 struct EngineProgressInfoV1
 {
-    uint32_t structSize;
-    uint32_t apiVersion;
+    std::uint32_t structSize;
+    std::uint32_t apiVersion;
     EngineEventType eventType;
     EngineScanStage stage;
-    uint32_t progressPercent;
+    std::uint32_t progressPercent;
     EngineStatus status;
     const EngineScanResultV1* result; // Valid only during callback.
     const wchar_t* message;           // Valid only during callback.
 };
 
-//Callback
 using EngineProgressCallback = BOOL(WINAPI*)(
     const EngineProgressInfoV1* progressInfo,
     void* userContext);

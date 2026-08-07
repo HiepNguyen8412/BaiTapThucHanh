@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="01 - Startup"><UniqueIdentifier>{11111111-1111-1111-1111-111111111111}</UniqueIdentifier></Filter>
+    <Filter Include="02 - Communication"><UniqueIdentifier>{22222222-2222-2222-2222-222222222222}</UniqueIdentifier></Filter>
+    <Filter Include="03 - Jobs (CORE)"><UniqueIdentifier>{33333333-3333-3333-3333-333333333333}</UniqueIdentifier></Filter>
+    <Filter Include="04 - Engine Bridge"><UniqueIdentifier>{44444444-4444-4444-4444-444444444444}</UniqueIdentifier></Filter>
+    <Filter Include="05 - Cache"><UniqueIdentifier>{55555555-5555-5555-5555-555555555555}</UniqueIdentifier></Filter>
+    <Filter Include="06 - Resource Control"><UniqueIdentifier>{66666666-6666-6666-6666-666666666666}</UniqueIdentifier></Filter>
+    <Filter Include="07 - Monitoring"><UniqueIdentifier>{77777777-7777-7777-7777-777777777777}</UniqueIdentifier></Filter>
+    <Filter Include="08 - Shared"><UniqueIdentifier>{88888888-8888-8888-8888-888888888888}</UniqueIdentifier></Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Startup\main.cpp"><Filter>01 - Startup</Filter></ClCompile><ClCompile Include="Startup\ServiceApp.cpp"><Filter>01 - Startup</Filter></ClCompile>
+    <ClCompile Include="Communication\PipeServer.cpp"><Filter>02 - Communication</Filter></ClCompile>
+    <ClCompile Include="Jobs\JobManager.cpp"><Filter>03 - Jobs (CORE)</Filter></ClCompile>
+    <ClCompile Include="EngineBridge\EngineLoader.cpp"><Filter>04 - Engine Bridge</Filter></ClCompile>
+    <ClCompile Include="Cache\Cache.cpp"><Filter>05 - Cache</Filter></ClCompile>
+    <ClCompile Include="ResourceControl\Throttle.cpp"><Filter>06 - Resource Control</Filter></ClCompile>
+    <ClCompile Include="Monitoring\Telemetry.cpp"><Filter>07 - Monitoring</Filter></ClCompile><ClCompile Include="Monitoring\Logger.cpp"><Filter>07 - Monitoring</Filter></ClCompile>
+    <ClCompile Include="..\Common\Protocol\Protocol.cpp"><Filter>08 - Shared</Filter></ClCompile><ClCompile Include="..\Common\Platform\WinUtil.cpp"><Filter>08 - Shared</Filter></ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Startup\ServiceApp.h"><Filter>01 - Startup</Filter></ClInclude>
+    <ClInclude Include="Communication\PipeServer.h"><Filter>02 - Communication</Filter></ClInclude>
+    <ClInclude Include="Jobs\Job.h"><Filter>03 - Jobs (CORE)</Filter></ClInclude><ClInclude Include="Jobs\JobManager.h"><Filter>03 - Jobs (CORE)</Filter></ClInclude>
+    <ClInclude Include="EngineBridge\EngineLoader.h"><Filter>04 - Engine Bridge</Filter></ClInclude>
+    <ClInclude Include="Cache\Cache.h"><Filter>05 - Cache</Filter></ClInclude>
+    <ClInclude Include="ResourceControl\Throttle.h"><Filter>06 - Resource Control</Filter></ClInclude>
+    <ClInclude Include="Monitoring\Telemetry.h"><Filter>07 - Monitoring</Filter></ClInclude><ClInclude Include="Monitoring\Logger.h"><Filter>07 - Monitoring</Filter></ClInclude>
+    <ClInclude Include="..\Common\Api\EngineApi.h"><Filter>08 - Shared</Filter></ClInclude><ClInclude Include="..\Common\Protocol\Protocol.h"><Filter>08 - Shared</Filter></ClInclude><ClInclude Include="..\Common\Platform\WinUtil.h"><Filter>08 - Shared</Filter></ClInclude>
+  </ItemGroup>
+</Project>
