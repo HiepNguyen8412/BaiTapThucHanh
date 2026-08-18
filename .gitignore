@@ -85,4 +85,4 @@ cat >> .gitignore <<'EOF'
 [Rr]elease/
 x64/
 x86/
-EOF
+EOF*.zip
