@@ -9,6 +9,8 @@
 #include <chrono>
 #include <sstream>
 
+using namespace std;
+
 JobManager::JobManager(
     EngineLoader& engine,
     ResultCache& cache,
@@ -25,11 +27,11 @@ JobManager::JobManager(
 
 JobManager::~JobManager() { Stop(); }
 
-void JobManager::Start(std::size_t workerCount)
+void JobManager::Start(size_t workerCount)
 {
     if (running_.exchange(true)) return;
     workerCount = workerCount == 0 ? 1 : workerCount;
-    for (std::size_t i = 0; i < workerCount; ++i)
+    for (size_t i = 0; i < workerCount; ++i)
     {
         workers_.emplace_back(&JobManager::WorkerLoop, this);
     }
@@ -38,7 +40,7 @@ void JobManager::Start(std::size_t workerCount)
 void JobManager::Stop()
 {
     {
-        std::lock_guard lock(jobsMutex_);
+        lock_guard lock(jobsMutex_);
         for (auto& [id, job] : jobs_)
         {
             UNREFERENCED_PARAMETER(id);
@@ -54,13 +56,13 @@ void JobManager::Stop()
     workers_.clear();
 }
 
-std::uint64_t JobManager::Submit(
-    const std::wstring& path,
+uint64_t JobManager::Submit(
+    const wstring& path,
     JobPriority priority,
-    std::uint32_t timeoutMs,
-    const std::shared_ptr<IJobEventSink>& sink)
+    uint32_t timeoutMs,
+    const shared_ptr<IJobEventSink>& sink)
 {
-    auto job = std::make_shared<ScanJob>();
+    auto job = make_shared<ScanJob>();
     job->id = nextJobId_++;
     job->sequence = nextSequence_++;
     job->path = path;
@@ -70,28 +72,28 @@ std::uint64_t JobManager::Submit(
     job->message = L"Job queued";
 
     {
-        std::lock_guard lock(jobsMutex_);
+        lock_guard lock(jobsMutex_);
         jobs_[job->id] = job;
     }
     {
-        std::lock_guard lock(queueMutex_);
+        lock_guard lock(queueMutex_);
         queue_.push(job);
     }
     telemetry_.JobReceived();
     telemetry_.PendingIncrement();
     queueCv_.notify_one();
 
-    std::wstringstream stream;
+    wstringstream stream;
     stream << L"Received job " << job->id << L" path=" << path;
     logger_.Info(stream.str());
     return job->id;
 }
 
-bool JobManager::Query(std::uint64_t jobId, JobSnapshot& snapshot) const
+bool JobManager::Query(uint64_t jobId, JobSnapshot& snapshot) const
 {
-    std::shared_ptr<ScanJob> job;
+    shared_ptr<ScanJob> job;
     {
-        std::lock_guard lock(jobsMutex_);
+        lock_guard lock(jobsMutex_);
         const auto it = jobs_.find(jobId);
         if (it == jobs_.end()) return false;
         job = it->second;
@@ -100,18 +102,18 @@ bool JobManager::Query(std::uint64_t jobId, JobSnapshot& snapshot) const
     return true;
 }
 
-bool JobManager::Cancel(std::uint64_t jobId, JobSnapshot& snapshot)
+bool JobManager::Cancel(uint64_t jobId, JobSnapshot& snapshot)
 {
-    std::shared_ptr<ScanJob> job;
+    shared_ptr<ScanJob> job;
     {
-        std::lock_guard lock(jobsMutex_);
+        lock_guard lock(jobsMutex_);
         const auto it = jobs_.find(jobId);
         if (it == jobs_.end()) return false;
         job = it->second;
     }
     job->cancelRequested.store(true);
     {
-        std::lock_guard lock(job->mutex);
+        lock_guard lock(job->mutex);
         if (job->state == JobState::Pending || job->state == JobState::Delayed)
         {
             job->message = L"Cancellation requested";
@@ -122,7 +124,7 @@ bool JobManager::Cancel(std::uint64_t jobId, JobSnapshot& snapshot)
     return true;
 }
 
-void JobManager::Notify(const std::shared_ptr<ScanJob>& job)
+void JobManager::Notify(const shared_ptr<ScanJob>& job)
 {
     if (auto sink = job->sink.lock())
     {
@@ -131,15 +133,15 @@ void JobManager::Notify(const std::shared_ptr<ScanJob>& job)
 }
 
 void JobManager::SetState(
-    const std::shared_ptr<ScanJob>& job,
+    const shared_ptr<ScanJob>& job,
     JobState state,
     EngineStatus engineStatus,
-    std::uint32_t progress,
+    uint32_t progress,
     EngineScanStage stage,
-    const std::wstring& message)
+    const wstring& message)
 {
     {
-        std::lock_guard lock(job->mutex);
+        lock_guard lock(job->mutex);
         job->state = state;
         job->engineStatus = engineStatus;
         job->progress = progress;
@@ -149,9 +151,9 @@ void JobManager::SetState(
     Notify(job);
 }
 
-void JobManager::FinishCancelled(const std::shared_ptr<ScanJob>& job)
+void JobManager::FinishCancelled(const shared_ptr<ScanJob>& job)
 {
-    const std::uint64_t duration = job->startTick == 0 ? 0 : GetTickCount64() - job->startTick;
+    const uint64_t duration = job->startTick == 0 ? 0 : GetTickCount64() - job->startTick;
     SetState(
         job,
         JobState::Cancelled,
@@ -172,7 +174,7 @@ BOOL WINAPI JobManager::EngineCallback(
     if (job->cancelRequested.load()) return FALSE;
 
     {
-        std::lock_guard lock(job->mutex);
+        lock_guard lock(job->mutex);
         job->progress = info->progressPercent;
         job->stage = info->stage;
         job->engineStatus = info->status;
@@ -191,9 +193,9 @@ void JobManager::WorkerLoop()
 {
     while (running_.load())
     {
-        std::shared_ptr<ScanJob> job;
+        shared_ptr<ScanJob> job;
         {
-            std::unique_lock lock(queueMutex_);
+            unique_lock lock(queueMutex_);
             queueCv_.wait(lock, [this] { return !running_.load() || !queue_.empty(); });
             if (!running_.load()) return;
             job = queue_.top();
@@ -224,11 +226,11 @@ void JobManager::WorkerLoop()
                     L"DELAYED: machine is overloaded; only high-priority jobs may run");
             }
             {
-                std::lock_guard lock(queueMutex_);
+                lock_guard lock(queueMutex_);
                 queue_.push(job);
             }
             telemetry_.PendingIncrement();
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            this_thread::sleep_for(chrono::milliseconds(500));
             continue;
         }
 
@@ -243,9 +245,9 @@ void JobManager::WorkerLoop()
             L"Job running");
 
         DWORD pathError = ERROR_SUCCESS;
-        const std::wstring normalizedPath = WinUtil::NormalizePath(job->path, pathError);
-        std::uint64_t fileSize = 0;
-        std::uint64_t lastWriteTime = 0;
+        const wstring normalizedPath = WinUtil::NormalizePath(job->path, pathError);
+        uint64_t fileSize = 0;
+        uint64_t lastWriteTime = 0;
         const bool identityOk = !normalizedPath.empty() &&
             WinUtil::GetFileIdentity(normalizedPath, fileSize, lastWriteTime, pathError);
 
@@ -255,7 +257,7 @@ void JobManager::WorkerLoop()
         {
             cachedResult.scanDurationMs = 0;
             {
-                std::lock_guard lock(job->mutex);
+                lock_guard lock(job->mutex);
                 job->state = JobState::Completed;
                 job->engineStatus = EngineStatus::Success;
                 job->progress = 100;
@@ -286,7 +288,7 @@ void JobManager::WorkerLoop()
             &JobManager::EngineCallback,
             &context);
 
-        const std::uint64_t duration = GetTickCount64() - job->startTick;
+        const uint64_t duration = GetTickCount64() - job->startTick;
         telemetry_.RunningDecrement();
 
         if (status == EngineStatus::Success)
@@ -294,7 +296,7 @@ void JobManager::WorkerLoop()
             EngineScanResultV1 result{};
             bool hasResult = false;
             {
-                std::lock_guard lock(job->mutex);
+                lock_guard lock(job->mutex);
                 hasResult = job->hasResult;
                 result = job->result;
                 job->state = JobState::Completed;

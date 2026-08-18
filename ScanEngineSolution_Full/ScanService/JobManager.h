@@ -12,6 +12,8 @@
 #include <unordered_map>
 #include <vector>
 
+using namespace std;
+
 class EngineLoader;
 class ResultCache;
 class ThrottleMonitor;
@@ -29,27 +31,27 @@ public:
         Logger& logger);
     ~JobManager();
 
-    void Start(std::size_t workerCount);
+    void Start(size_t workerCount);
     void Stop();
-    std::uint64_t Submit(
-        const std::wstring& path,
+    uint64_t Submit(
+        const wstring& path,
         JobPriority priority,
-        std::uint32_t timeoutMs,
-        const std::shared_ptr<IJobEventSink>& sink);
-    bool Query(std::uint64_t jobId, JobSnapshot& snapshot) const;
-    bool Cancel(std::uint64_t jobId, JobSnapshot& snapshot);
+        uint32_t timeoutMs,
+        const shared_ptr<IJobEventSink>& sink);
+    bool Query(uint64_t jobId, JobSnapshot& snapshot) const;
+    bool Cancel(uint64_t jobId, JobSnapshot& snapshot);
 
 private:
     struct QueueCompare
     {
         bool operator()(
-            const std::shared_ptr<ScanJob>& left,
-            const std::shared_ptr<ScanJob>& right) const
+            const shared_ptr<ScanJob>& left,
+            const shared_ptr<ScanJob>& right) const
         {
             if (left->priority != right->priority)
             {
-                return static_cast<std::uint32_t>(left->priority) <
-                    static_cast<std::uint32_t>(right->priority);
+                return static_cast<uint32_t>(left->priority) <
+                    static_cast<uint32_t>(right->priority);
             }
             return left->sequence > right->sequence;
         }
@@ -58,22 +60,22 @@ private:
     struct CallbackContext
     {
         JobManager* manager{};
-        std::shared_ptr<ScanJob> job;
+        shared_ptr<ScanJob> job;
     };
 
     static BOOL WINAPI EngineCallback(
         const EngineProgressInfoV1* info,
         void* userContext);
     void WorkerLoop();
-    void Notify(const std::shared_ptr<ScanJob>& job);
+    void Notify(const shared_ptr<ScanJob>& job);
     void SetState(
-        const std::shared_ptr<ScanJob>& job,
+        const shared_ptr<ScanJob>& job,
         JobState state,
         EngineStatus engineStatus,
-        std::uint32_t progress,
+        uint32_t progress,
         EngineScanStage stage,
-        const std::wstring& message);
-    void FinishCancelled(const std::shared_ptr<ScanJob>& job);
+        const wstring& message);
+    void FinishCancelled(const shared_ptr<ScanJob>& job);
 
     EngineLoader& engine_;
     ResultCache& cache_;
@@ -81,16 +83,16 @@ private:
     Telemetry& telemetry_;
     Logger& logger_;
 
-    std::atomic_bool running_{false};
-    std::atomic_uint64_t nextJobId_{1};
-    std::atomic_uint64_t nextSequence_{1};
-    mutable std::mutex jobsMutex_;
-    std::unordered_map<std::uint64_t, std::shared_ptr<ScanJob>> jobs_;
-    std::mutex queueMutex_;
-    std::condition_variable queueCv_;
-    std::priority_queue<
-        std::shared_ptr<ScanJob>,
-        std::vector<std::shared_ptr<ScanJob>>,
+    atomic_bool running_{false};
+    atomic_uint64_t nextJobId_{1};
+    atomic_uint64_t nextSequence_{1};
+    mutable mutex jobsMutex_;
+    unordered_map<uint64_t, shared_ptr<ScanJob>> jobs_;
+    mutex queueMutex_;
+    condition_variable queueCv_;
+    priority_queue<
+        shared_ptr<ScanJob>,
+        vector<shared_ptr<ScanJob>>,
         QueueCompare> queue_;
-    std::vector<std::thread> workers_;
+    vector<thread> workers_;
 };

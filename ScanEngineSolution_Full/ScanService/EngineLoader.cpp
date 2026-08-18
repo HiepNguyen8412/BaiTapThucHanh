@@ -4,10 +4,13 @@
 
 #include <sstream>
 
+using namespace std;
+
+
 EngineLoader::EngineLoader(Logger& logger) : logger_(logger) {}
 EngineLoader::~EngineLoader() { Unload(); }
 
-bool EngineLoader::Load(const std::wstring& dllPath)
+bool EngineLoader::Load(const wstring& dllPath)
 {
     Unload();
     module_ = LoadLibraryW(dllPath.c_str());
@@ -39,15 +42,15 @@ bool EngineLoader::Load(const std::wstring& dllPath)
         "{\"entropyThreshold\":7.2,\"maxEntropyBytes\":1048576,\"progressIntervalMs\":100}");
     if (status != EngineStatus::Success && status != EngineStatus::AlreadyInitialized)
     {
-        std::wstringstream stream;
-        stream << L"EngineInitialize failed. Status=" << static_cast<std::uint32_t>(status);
+        wstringstream stream;
+        stream << L"EngineInitialize failed. Status=" << static_cast<uint32_t>(status);
         logger_.Error(stream.str());
         Unload();
         return false;
     }
 
-    const std::string version = Version();
-    logger_.Info(L"Loaded ScanEngine.dll version " + std::wstring(version.begin(), version.end()));
+    const string version = Version();
+    logger_.Info(L"Loaded ScanEngine.dll version " + wstring(version.begin(), version.end()));
     return true;
 }
 
@@ -75,9 +78,9 @@ EngineStatus EngineLoader::Scan(
     return scanFile_(path, options, callback, context);
 }
 
-std::string EngineLoader::Version() const
+string EngineLoader::Version() const
 {
     if (getVersion_ == nullptr) return {};
     const char* value = getVersion_();
-    return value == nullptr ? std::string{} : std::string(value);
+    return value == nullptr ? string{} : string(value);
 }

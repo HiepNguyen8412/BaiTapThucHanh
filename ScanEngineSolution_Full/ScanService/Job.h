@@ -9,16 +9,18 @@
 #include <mutex>
 #include <string>
 
+using namespace std;
+
 class IJobEventSink;
 
-enum class JobPriority : std::uint32_t
+enum class JobPriority : uint32_t
 {
     Low = 0,
     Normal = 1,
     High = 2
 };
 
-enum class JobState : std::uint32_t
+enum class JobState : uint32_t
 {
     Pending = 0,
     Delayed,
@@ -30,14 +32,14 @@ enum class JobState : std::uint32_t
 
 struct JobSnapshot
 {
-    std::uint64_t jobId{};
+    uint64_t jobId{};
     JobPriority priority{JobPriority::Normal};
     JobState state{JobState::Pending};
-    std::uint32_t progress{};
+    uint32_t progress{};
     EngineScanStage stage{EngineScanStage::Starting};
     EngineStatus engineStatus{EngineStatus::Success};
-    std::wstring path;
-    std::wstring message;
+    wstring path;
+    wstring message;
     EngineScanResultV1 result{};
     bool hasResult{false};
     bool cacheHit{false};
@@ -52,21 +54,21 @@ public:
 
 struct ScanJob
 {
-    std::uint64_t id{};
-    std::uint64_t sequence{};
-    std::wstring path;
+    uint64_t id{};
+    uint64_t sequence{};
+    wstring path;
     JobPriority priority{JobPriority::Normal};
-    std::uint32_t timeoutMs{};
-    std::atomic_bool cancelRequested{false};
-    std::atomic_uint64_t lastDelayedEventTick{0};
-    std::weak_ptr<IJobEventSink> sink;
+    uint32_t timeoutMs{};
+    atomic_bool cancelRequested{false};
+    atomic_uint64_t lastDelayedEventTick{0};
+    weak_ptr<IJobEventSink> sink;
 
-    mutable std::mutex mutex;
+    mutable mutex mutex;
     JobState state{JobState::Pending};
-    std::uint32_t progress{};
+    uint32_t progress{};
     EngineScanStage stage{EngineScanStage::Starting};
     EngineStatus engineStatus{EngineStatus::Success};
-    std::wstring message;
+    wstring message;
     EngineScanResultV1 result{};
     bool hasResult{false};
     bool cacheHit{false};
@@ -75,7 +77,7 @@ struct ScanJob
 
 inline JobSnapshot SnapshotOf(const ScanJob& job)
 {
-    std::lock_guard lock(job.mutex);
+    lock_guard lock(job.mutex);
     JobSnapshot snapshot{};
     snapshot.jobId = job.id;
     snapshot.priority = job.priority;

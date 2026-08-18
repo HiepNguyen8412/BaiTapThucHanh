@@ -5,6 +5,8 @@
 #include <Windows.h>
 #include <string>
 
+using namespace std;
+
 class Logger;
 
 class EngineLoader
@@ -13,7 +15,7 @@ public:
     explicit EngineLoader(Logger& logger);
     ~EngineLoader();
 
-    bool Load(const std::wstring& dllPath);
+    bool Load(const wstring& dllPath);
     void Unload();
     bool IsLoaded() const noexcept { return module_ != nullptr; }
     EngineStatus Scan(
@@ -21,7 +23,7 @@ public:
         const EngineScanOptionsV1* options,
         EngineProgressCallback callback,
         void* context) const;
-    std::string Version() const;
+    string Version() const;
 
 private:
     Logger& logger_;

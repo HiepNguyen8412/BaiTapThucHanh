@@ -8,11 +8,13 @@
 #include <string>
 #include <unordered_map>
 
+using namespace std;
+
 struct CacheKey
 {
-    std::wstring normalizedPath;
-    std::uint64_t lastWriteTime{};
-    std::uint64_t fileSize{};
+    wstring normalizedPath;
+    uint64_t lastWriteTime{};
+    uint64_t fileSize{};
 
     bool operator==(const CacheKey& other) const noexcept
     {
@@ -24,13 +26,13 @@ struct CacheKey
 
 struct CacheKeyHash
 {
-    std::size_t operator()(const CacheKey& key) const noexcept;
+    size_t operator()(const CacheKey& key) const noexcept;
 };
 
 class ResultCache
 {
 public:
-    explicit ResultCache(std::chrono::minutes ttl = std::chrono::minutes(10));
+    explicit ResultCache(chrono::minutes ttl = chrono::minutes(10));
     bool TryGet(const CacheKey& key, EngineScanResultV1& result);
     void Put(const CacheKey& key, const EngineScanResultV1& result);
     void Cleanup();
@@ -39,10 +41,10 @@ private:
     struct Entry
     {
         EngineScanResultV1 result{};
-        std::chrono::steady_clock::time_point expiresAt{};
+        chrono::steady_clock::time_point expiresAt{};
     };
 
-    std::chrono::minutes ttl_;
-    std::mutex mutex_;
-    std::unordered_map<CacheKey, Entry, CacheKeyHash> entries_;
+    chrono::minutes ttl_;
+    mutex mutex_;
+    unordered_map<CacheKey, Entry, CacheKeyHash> entries_;
 };

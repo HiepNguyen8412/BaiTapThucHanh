@@ -5,37 +5,40 @@
 #include <filesystem>
 #include <iomanip>
 
-bool Logger::Open(const std::wstring& path)
+using namespace std;
+
+
+bool Logger::Open(const wstring& path)
 {
-    std::lock_guard lock(mutex_);
-    stream_.open(std::filesystem::path(path), std::ios::app);
+    lock_guard lock(mutex_);
+    stream_.open(filesystem::path(path), ios::app);
     return stream_.is_open();
 }
 
-void Logger::Info(const std::wstring& message)
+void Logger::Info(const wstring& message)
 {
     Write(L"INFO", message);
 }
 
-void Logger::Error(const std::wstring& message)
+void Logger::Error(const wstring& message)
 {
     Write(L"ERROR", message);
 }
 
-void Logger::Write(const wchar_t* level, const std::wstring& message)
+void Logger::Write(const wchar_t* level, const wstring& message)
 {
-    std::lock_guard lock(mutex_);
+    lock_guard lock(mutex_);
     if (!stream_.is_open()) return;
 
     SYSTEMTIME time{};
     GetLocalTime(&time);
-    stream_ << std::setfill(L'0')
-        << L'[' << std::setw(4) << time.wYear << L'-'
-        << std::setw(2) << time.wMonth << L'-'
-        << std::setw(2) << time.wDay << L' '
-        << std::setw(2) << time.wHour << L':'
-        << std::setw(2) << time.wMinute << L':'
-        << std::setw(2) << time.wSecond << L'.'
-        << std::setw(3) << time.wMilliseconds << L"] "
-        << L'[' << level << L"] " << message << std::endl;
+    stream_ << setfill(L'0')
+        << L'[' << setw(4) << time.wYear << L'-'
+        << setw(2) << time.wMonth << L'-'
+        << setw(2) << time.wDay << L' '
+        << setw(2) << time.wHour << L':'
+        << setw(2) << time.wMinute << L':'
+        << setw(2) << time.wSecond << L'.'
+        << setw(3) << time.wMilliseconds << L"] "
+        << L'[' << level << L"] " << message << endl;
 }
