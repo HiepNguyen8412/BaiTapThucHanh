@@ -1,6 +1,0 @@
-LIBRARY "ScanEngine"
-EXPORTS
-    EngineInitialize
-    EngineScanFile
-    EngineGetVersion
-    EngineShutdown

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+ <ItemGroup>
+  <Filter Include="01 - DLL Entry"><UniqueIdentifier>{aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa}</UniqueIdentifier></Filter>
+  <Filter Include="02 - Engine Core"><UniqueIdentifier>{bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb}</UniqueIdentifier></Filter>
+  <Filter Include="03 - File Analysis"><UniqueIdentifier>{cccccccc-cccc-cccc-cccc-cccccccccccc}</UniqueIdentifier></Filter>
+  <Filter Include="04 - Shared API"><UniqueIdentifier>{dddddddd-dddd-dddd-dddd-dddddddddddd}</UniqueIdentifier></Filter>
+ </ItemGroup>
+ <ItemGroup>
+  <ClCompile Include="DllEntry\dllmain.cpp"><Filter>01 - DLL Entry</Filter></ClCompile>
+  <ClCompile Include="Core\Engine.cpp"><Filter>02 - Engine Core</Filter></ClCompile>
+  <ClCompile Include="Analysis\FileAnalyzer.cpp"><Filter>03 - File Analysis</Filter></ClCompile>
+ </ItemGroup>
+ <ItemGroup>
+  <ClInclude Include="Analysis\FileAnalyzer.h"><Filter>03 - File Analysis</Filter></ClInclude>
+  <ClInclude Include="..\Common\Api\EngineApi.h"><Filter>04 - Shared API</Filter></ClInclude>
+ </ItemGroup>
+ <ItemGroup><None Include="DllEntry\ScanEngine.def"><Filter>01 - DLL Entry</Filter></None></ItemGroup>
+</Project>
