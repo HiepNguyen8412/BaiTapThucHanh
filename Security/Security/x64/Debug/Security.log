@@ -1,0 +1,11 @@
+﻿C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Microsoft\VC\v180\Microsoft.CppClean.targets(77,5): warning : Access to the path 'c:\users\admin\onedrive\desktop\security\x64\debug\security.exe' is denied.
+  Security.cpp
+C:\Users\Admin\OneDrive\Desktop\Security\Security\Security.cpp(1,9): warning C4005: 'UNICODE': macro redefinition
+      C:\Users\Admin\OneDrive\Desktop\Security\Security\Security.cpp(1,9):
+      'UNICODE' previously declared on the command line
+  
+C:\Users\Admin\OneDrive\Desktop\Security\Security\Security.cpp(2,9): warning C4005: '_UNICODE': macro redefinition
+      C:\Users\Admin\OneDrive\Desktop\Security\Security\Security.cpp(2,9):
+      '_UNICODE' previously declared on the command line
+  
+  Security.vcxproj -> C:\Users\Admin\OneDrive\Desktop\Security\x64\Debug\Security.exe
