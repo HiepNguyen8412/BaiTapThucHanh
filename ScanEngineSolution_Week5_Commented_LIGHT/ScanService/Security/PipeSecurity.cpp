@@ -67,7 +67,7 @@ namespace
     // So sanh ten user client khai bao trong HELLO voi danh tinh lay tu token he thong.
     bool ClaimedUserMatches(const std::wstring& claimed, const std::wstring& actual)
     {
-        if (claimed.empty()) return true;
+        if (claimed.empty()) return false;
         if (_wcsicmp(claimed.c_str(), actual.c_str()) == 0) return true;
         const auto slash = actual.find_last_of(L'\\');
         const std::wstring account = slash == std::wstring::npos ? actual : actual.substr(slash + 1);
@@ -97,6 +97,7 @@ bool PipeSecurityDescriptor::Build()
 
     // SYSTEM + Administrators = full; Interactive Users = read/write.
     // Authentication below further binds the connection to the real PID/SID/session.
+    // Security Descriptor/ACL 
     if (!ConvertStringSecurityDescriptorToSecurityDescriptorW(
             L"D:P(A;;GA;;;SY)(A;;GA;;;BA)(A;;GRGW;;;IU)",
             SDDL_REVISION_1,
@@ -126,6 +127,7 @@ bool PipeSecurity::Authenticate(
     errorCode = AvProtocol::ServiceErrorCode::Ok;
     errorMessage.clear();
 
+	// PID client khai báo phải khớp với PID thực tế của tiến trình kết nối Named Pipe.
     ULONG actualPid = 0;
     if (!GetNamedPipeClientProcessId(pipe, &actualPid))
     {
@@ -140,6 +142,7 @@ bool PipeSecurity::Authenticate(
         return false;
     }
 
+    // Impersonate client trên pipe, đọc token thật và so khớp với user
     if (!ImpersonateNamedPipeClient(pipe))
     {
         errorCode = AvProtocol::ServiceErrorCode::AuthTokenFailed;
@@ -169,6 +172,7 @@ bool PipeSecurity::Authenticate(
         return false;
     }
 
+	// Kiểm tra process theo PID đó còn tồn tại và đọc token của process đó để xác thực.
     HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, actualPid);
     if (process == nullptr)
     {

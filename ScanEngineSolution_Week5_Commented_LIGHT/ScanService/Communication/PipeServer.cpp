@@ -201,7 +201,7 @@ bool ClientSession::PerformHandshake()
 {
     AvProtocol::Message message;
     DWORD readError = ERROR_SUCCESS;
-    if (!AvProtocol::ReadMessage(pipe_, message, readError))
+    if (!AvProtocol::ReadMessage(pipe_, message, readError)) // Trả lỗi checksum faul chuẩn hóa 
     {
         if (readError == ERROR_CRC)
         {
@@ -212,6 +212,7 @@ bool ClientSession::PerformHandshake()
         return false;
     }
 
+    // Service xử lý RESUME
     const auto messageType = static_cast<AvProtocol::MessageType>(message.header.type);
     if (messageType != AvProtocol::MessageType::Hello && messageType != AvProtocol::MessageType::Resume)
     {
@@ -308,6 +309,7 @@ bool ClientSession::PerformHandshake()
 
 // Xu ly SCAN: parse path/priority/timeout -> rate limit -> policy -> JobManager::Submit().
 // Ham nay KHONG scan file truc tiep; viec nang duoc day sang worker pool.
+// Mỗi lần request SCAN đều được kiểm tra policy và rate limit, nếu vượt quá sẽ trả lỗi ngay lập tức.
 void ClientSession::HandleScan(const AvProtocol::Message& message)
 {
     AvProtocol::TlvReader reader(message.payload);
@@ -332,6 +334,7 @@ void ClientSession::HandleScan(const AvProtocol::Message& message)
     reader.GetU32(AvProtocol::FieldType::Priority, priority);
     reader.GetU32(AvProtocol::FieldType::TimeoutMs, timeoutMs);
 
+    // Mỗi lần request SCAN đều được kiểm tra policy và rate limit, nếu vượt quá sẽ trả lỗi ngay lập tức.
     std::wstring normalizedPath;
     std::wstring policyReason;
     if (sessionState_ == nullptr ||
@@ -347,6 +350,7 @@ void ClientSession::HandleScan(const AvProtocol::Message& message)
         return;
     }
 
+	// Rate limit theo clientId + userSid, khong phai chi theo clientId de tranh viec 1 user tao nhieu clientId de qua tai service.
     std::uint32_t retryAfterMs = 0;
     const std::string rateKey = sessionState_->ClientId() + "|" +
         std::string(sessionState_->Identity().userSid.begin(), sessionState_->Identity().userSid.end());
@@ -549,6 +553,7 @@ void PipeServer::Stop()
 
 // ACCEPT LOOP: tao Named Pipe instance -> cho ConnectNamedPipe -> tao ClientSession.
 // Moi ket noi duoc tach sang session thread, vi the AcceptLoop quay lai nhan client tiep theo ngay.
+// Ap dung Descriptor ACL de chi cho phep cac process co token SYSTEM/LOCAL SERVICE/NETWORK SERVICE va cac user co quyen truy cap vao pipe.
 void PipeServer::AcceptLoop()
 {
     logger_.Info(L"Named pipe server listening on " + std::wstring(AvProtocol::PIPE_NAME));

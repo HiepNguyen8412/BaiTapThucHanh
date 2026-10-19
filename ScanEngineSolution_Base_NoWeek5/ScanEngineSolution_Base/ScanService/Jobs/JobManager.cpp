@@ -62,17 +62,12 @@ void JobManager::Stop()
     workers_.clear();
 }
 
-<<<<<<< HEAD:ScanEngineSolution_Full/ScanService/JobManager.cpp
-uint64_t JobManager::Submit(
-    const wstring& path,
-=======
 // ---------------------------------------------------------------------------
 // Submit() CHAY TREN CLIENT SESSION THREAD, khong phai worker thread.
 // Nhiem vu: tao Job -> cap ID/sequence -> luu jobs_ -> push priority queue -> wake worker.
 // ---------------------------------------------------------------------------
 std::uint64_t JobManager::Submit(
     const std::wstring& path,
->>>>>>> ea9478dff7dce8efc2913b68c4c4a1fd577d2d7b:ScanEngineSolution_Base_NoWeek5/ScanEngineSolution_Base/ScanService/Jobs/JobManager.cpp
     JobPriority priority,
     uint32_t timeoutMs,
     const shared_ptr<IJobEventSink>& sink)
@@ -215,16 +210,11 @@ void JobManager::WorkerLoop()
     {
         shared_ptr<ScanJob> job;
         {
-<<<<<<< HEAD:ScanEngineSolution_Full/ScanService/JobManager.cpp
-            unique_lock lock(queueMutex_);
-            queueCv_.wait(lock, [this] { return !running_.load() || !queue_.empty(); });
-=======
             std::unique_lock lock(queueMutex_);
             queueCv_.wait(lock, [this] 
                 { 
                     return !running_.load() || !queue_.empty(); 
                 });
->>>>>>> ea9478dff7dce8efc2913b68c4c4a1fd577d2d7b:ScanEngineSolution_Base_NoWeek5/ScanEngineSolution_Base/ScanService/Jobs/JobManager.cpp
             if (!running_.load()) return;
             job = queue_.top();
             queue_.pop();

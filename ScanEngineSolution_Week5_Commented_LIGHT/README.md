@@ -74,17 +74,78 @@ Telemetry Thread         : log snapshot dinh ky
 
 ## 5. Build
 
-Visual Studio 2026:
+Visual Studio (2022/2026):
 
 1. Mo `ScanEngineSolution.sln`
 2. Chon `Debug | x64`
 3. `Build -> Rebuild Solution`
-4. Output: `x64\Debug\ScanEngine.dll`, `ScanService.exe`, `client.exe`
+4. Output tai: `x64\Debug\ScanEngine.dll`, `ScanService.exe`, `client.exe`
 
-Khong dung CMake.
+Hoac build bang dong lenh MSBuild:
+```cmd
+MSBuild.exe ScanEngineSolution.sln /p:Configuration=Debug /p:Platform=x64
+```
 
-## Week 5 upgrade
+## 6. Huong dan chay chuong trinh
+
+Service phai duoc bat truoc de mo Named Pipe `\\.\pipe\AvScanPipe` truoc khi Client gui lenh.
+
+### Buoc 1: Khoi dong Service (Chon 1 trong 2 cach)
+
+- **Cach A (Khuyen nghi khi dev/test - Console Mode):**
+  - Nhap dup file `run_console.cmd` o thu muc goc.
+  - Hoac chay tu terminal:
+    ```cmd
+    cd x64\Debug
+    ScanService.exe --console
+    ```
+  - *Nhan `Ctrl + C` de dung service an toan.*
+
+- **Cach B (Windows Service Mode - Can quyen Administrator):**
+  - Chuot phai `install_service.cmd` -> **Run as administrator** (tu dong install va `sc start AvScanService`).
+  - Go bo service: Chuot phai `uninstall_service.cmd` -> **Run as administrator**.
+
+---
+
+### Buoc 2: Chay Client (`client.exe`)
+
+Mo mot cua so Terminal moi tai thu muc `x64\Debug`:
+
+1. **Quet 1 file (Scan):**
+   ```cmd
+   client.exe scan "C:\Windows\System32\notepad.exe" --priority high
+   ```
+
+2. **Kiem tra Cache HIT (Fast-path):**
+   Chay lai lenh quet file notepad o tren lan thu 2. Ket qua se tra ve tuc thi tu Cache (0 ms) ma khong can phan tich lai qua DLL.
+
+3. **Xem Telemetry / Thong ke he thong:**
+   ```cmd
+   client.exe telemetry
+   ```
+   In ra: so request nhan, thanh cong, loi, cache hits, queue pending, latency p95.
+
+4. **Kiem thu tai dong thoi (Stress test 20 jobs):**
+   ```cmd
+   client.exe stress "C:\Windows\System32\notepad.exe" --count 20 --priority low
+   ```
+
+5. **Kiem tra hoac huy Job:**
+   ```cmd
+   client.exe query <jobId>
+   client.exe cancel <jobId>
+   ```
+
+---
+
+### Buoc 3: Chay kich ban test tu dong (Scenario)
+
+Khi Service dang chay o Console:
+- Nhap dup file `test_scenario.cmd` o thu muc goc de tu dong thuc hien: First scan -> Second scan (Cache HIT) -> Stress 20 jobs -> Telemetry.
+
+## 7. Week 5 upgrade
 
 Ban nay da bo sung protocol CRC32, backpressure/FLOW_CONTROL, SessionManager + reconnect/resume 10s,
 Named Pipe token authentication, path policy + rate limit, persistent versioned cache va PE Reader/Analyzer.
 Xem `docs/WEEK5_FLOW.md` de co 3 so do: luong tong quat, luong chi tiet va luong chinh.
+

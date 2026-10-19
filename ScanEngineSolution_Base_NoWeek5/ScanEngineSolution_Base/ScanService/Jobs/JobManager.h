@@ -91,18 +91,6 @@ private:
     Telemetry& telemetry_;
     Logger& logger_;
 
-<<<<<<< HEAD:ScanEngineSolution_Full/ScanService/JobManager.h
-    atomic_bool running_{false};
-    atomic_uint64_t nextJobId_{1};
-    atomic_uint64_t nextSequence_{1};
-    mutable mutex jobsMutex_;
-    unordered_map<uint64_t, shared_ptr<ScanJob>> jobs_;
-    mutex queueMutex_;
-    condition_variable queueCv_;
-    priority_queue<
-        shared_ptr<ScanJob>,
-        vector<shared_ptr<ScanJob>>,
-=======
     std::atomic_bool running_{false};
     std::atomic_uint64_t nextJobId_{1};
     std::atomic_uint64_t nextSequence_{1};
@@ -115,7 +103,6 @@ private:
     std::priority_queue<
         std::shared_ptr<ScanJob>,
         std::vector<std::shared_ptr<ScanJob>>,
->>>>>>> ea9478dff7dce8efc2913b68c4c4a1fd577d2d7b:ScanEngineSolution_Base_NoWeek5/ScanEngineSolution_Base/ScanService/Jobs/JobManager.h
         QueueCompare> queue_;
     vector<thread> workers_;
 };

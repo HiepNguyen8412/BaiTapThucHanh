@@ -13,13 +13,11 @@
 #include <string>
 #include <unordered_map>
 
-using namespace std;
-
 struct CacheKey
 {
-    wstring normalizedPath;
-    uint64_t lastWriteTime{};
-    uint64_t fileSize{};
+    std::wstring normalizedPath;
+    std::uint64_t lastWriteTime{};
+    std::uint64_t fileSize{};
 
     bool operator==(const CacheKey& other) const noexcept
     {
@@ -31,18 +29,14 @@ struct CacheKey
 
 struct CacheKeyHash
 {
-    size_t operator()(const CacheKey& key) const noexcept;
+    std::size_t operator()(const CacheKey& key) const noexcept;
 };
 
 class ResultCache
 {
 public:
-<<<<<<< HEAD:ScanEngineSolution_Full/ScanService/Cache.h
-    explicit ResultCache(chrono::minutes ttl = chrono::minutes(10));
-=======
     explicit ResultCache(std::chrono::minutes ttl = std::chrono::minutes(10));
 
->>>>>>> ea9478dff7dce8efc2913b68c4c4a1fd577d2d7b:ScanEngineSolution_Base_NoWeek5/ScanEngineSolution_Base/ScanService/Cache/Cache.h
     bool TryGet(const CacheKey& key, EngineScanResultV1& result);
     void Put(const CacheKey& key, const EngineScanResultV1& result);
     void Cleanup();
@@ -51,10 +45,10 @@ private:
     struct Entry
     {
         EngineScanResultV1 result{};
-        chrono::steady_clock::time_point expiresAt{};
+        std::chrono::steady_clock::time_point expiresAt{};
     };
 
-    chrono::minutes ttl_;
-    mutex mutex_;
-    unordered_map<CacheKey, Entry, CacheKeyHash> entries_;
+    std::chrono::minutes ttl_;
+    std::mutex mutex_;
+    std::unordered_map<CacheKey, Entry, CacheKeyHash> entries_;
 };

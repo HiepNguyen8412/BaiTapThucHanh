@@ -48,7 +48,7 @@ bool ServiceApp::Start()
     // 2) L2 cache survives service restart. Versioned key invalidates old engine/rules.
     const std::string engineVersion = engine_.Version();
     if (!cache_.ConfigurePersistent(
-            WinUtil::JoinPath(directory, L"ScanCache.dat"),
+            WinUtil::JoinPath(directory, L"ScanCache.db"),
             engineVersion,
             1,
             1))

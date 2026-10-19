@@ -221,12 +221,15 @@ namespace ScanEngineInternal
         {
             return PeParseStatus::MalformedPe;
         }
+
         if (image_.sectionCount == 0 || image_.sectionCount > 96) return PeParseStatus::StructCorrupt;
 
         const std::size_t optional = fileHeader + 20;
         if (!IsRangeValid(optional, optionalSize) || optionalSize < 96) return PeParseStatus::MalformedPe;
         std::uint16_t optionalMagic = 0;
         if (!ReadU16(optional, optionalMagic)) return PeParseStatus::MalformedPe;
+
+		// PE32 vs PE32+ (64-bit) check
         if (optionalMagic == PE32_MAGIC) image_.isPe32Plus = false;
         else if (optionalMagic == PE32_PLUS_MAGIC) image_.isPe32Plus = true;
         else return PeParseStatus::MalformedPe;
@@ -312,7 +315,8 @@ namespace ScanEngineInternal
             }
             image_.sections.push_back(section);
         }
-
+        
+        // Đọc metadata PE trả về cho Caller
         image_.isPe = true;
         image_.isDll = (image_.characteristics & FILE_DLL) != 0;
         image_.isDriver = image_.subsystem == 1 || HasSysExtension(path); // IMAGE_SUBSYSTEM_NATIVE = 1

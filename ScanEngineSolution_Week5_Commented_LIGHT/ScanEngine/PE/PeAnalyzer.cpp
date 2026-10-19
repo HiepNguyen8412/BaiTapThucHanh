@@ -61,6 +61,7 @@ namespace
     }
 
     // Danh dau cac API import nhay cam (process/memory/network/crypto...) de rule evaluator cham diem.
+	// Nhóm C - Import, TLS, delay import, export.
     void MarkRiskyImport(const std::string& rawName, ScanEngineInternal::PeAnalysis& analysis)
     {
         const std::string name = Lower(rawName);
@@ -160,6 +161,7 @@ namespace
 namespace ScanEngineInternal
 {
     // Phan tich dac diem co ban: section entropy/name/permission, overlay va cac dau hieu bat thuong.
+	// Nhóm A - Header và metadata PE, khong can doc Import/Resource/DelayImport.
     void PeAnalyzer::AnalyzeBasic(const PeReader& reader, double threshold, PeAnalysis& analysis)
     {
         const auto& image = reader.Image();
@@ -181,6 +183,7 @@ namespace ScanEngineInternal
             if (image.entryPointRva >= begin && image.entryPointRva < end) entryInSection = true;
 
             const std::string lowered = Lower(section.name);
+			// Phat hien section name bat thuong hoac trung lap.
             if (StrangeName(section.name) || !names.insert(lowered).second) analysis.strangeSectionName = true;
             const bool executable = (section.characteristics & MEM_EXECUTE) != 0;
             const bool writable = (section.characteristics & MEM_WRITE) != 0;

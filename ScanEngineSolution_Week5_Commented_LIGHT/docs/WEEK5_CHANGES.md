@@ -33,12 +33,13 @@ va chen them cac lop xu ly Week 5 vao dung diem can thiet.
 - `PolicyManager`: resolve path va deny `Windows\\System32`.
 - `RateLimiter`: token bucket 10 SCAN/s, burst 20 theo client principal.
 
-## 4. Persistent Cache
+## 4. Persistent Cache (SQLite + LRU RAM)
 
-- Cache van co fast path tren RAM.
-- `ScanCache.dat` luu ket qua qua service restart, TTL mac dinh 7 ngay.
-- Cache key them `engineVersion + ruleSetVersion + cacheSchemaVersion`.
-- Update engine/rule/schema => key cu tu dong MISS, khong tai su dung ket qua stale.
+- Kiến trúc Hybrid: L1 Memory LRU (2.000 hot entries) + L2 Persistent SQLite Database (`ScanCache.db`).
+- SQLite được cấu hình WAL mode (`PRAGMA journal_mode = WAL`), B-Tree composite index và ACID transaction giúp ghi cực nhanh, không nghẽn I/O.
+- Lưu trữ kết quả qua service restart, TTL mặc định 7 ngày.
+- Cache key gồm `path + lastWriteTime + fileSize + engineVersion + ruleSetVersion + cacheSchemaVersion`.
+- Update engine/rule/schema => key cũ tự động MISS hoặc bị xóa bỏ khi khởi động, không tái sử dụng kết quả stale.
 
 ## 5. PE Reader / Analyzer
 

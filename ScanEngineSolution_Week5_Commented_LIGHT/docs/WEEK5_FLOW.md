@@ -52,8 +52,8 @@ Throttle
    |
    v
 ResultCache
-   |-- L1 memory
-   `-- L2 ScanCache.dat (persistent, default TTL 7 days)
+   |-- L1 memory (LRU)
+   `-- L2 ScanCache.db (persistent SQLite, default TTL 7 days)
          key = path + mtime + size + engineVersion + ruleVersion + schemaVersion
    |
    | HIT -------------------------------> Result
@@ -116,7 +116,7 @@ ServiceApp::Start()
       |       |-- EngineInitialize
       |       `-- EngineGetVersion
       |
-      +--> ResultCache::ConfigurePersistent(ScanCache.dat, EngineVersion)
+      +--> ResultCache::ConfigurePersistent(ScanCache.db, EngineVersion)
       |
       +--> SessionManager::Start()
       |

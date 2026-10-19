@@ -16,11 +16,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup><OutDir>$(SolutionDir)x64\$(Configuration)\</OutDir><IntDir>$(SolutionDir)build\$(ProjectName)\$(Configuration)\</IntDir><TargetName>ScanService</TargetName></PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile><WarningLevel>Level4</WarningLevel><SDLCheck>true</SDLCheck><PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_CONSOLE;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions><ConformanceMode>true</ConformanceMode><LanguageStandard>stdcpp17</LanguageStandard><AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
+    <ClCompile><WarningLevel>Level4</WarningLevel><SDLCheck>true</SDLCheck><PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;_DEBUG;_CONSOLE;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions><ConformanceMode>true</ConformanceMode><LanguageStandard>stdcpp17</LanguageStandard><AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\Common;$(ProjectDir)ThirdParty\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
     <Link><SubSystem>Console</SubSystem><GenerateDebugInformation>true</GenerateDebugInformation><AdditionalDependencies>Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile><WarningLevel>Level4</WarningLevel><FunctionLevelLinking>true</FunctionLevelLinking><IntrinsicFunctions>true</IntrinsicFunctions><SDLCheck>true</SDLCheck><PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_CONSOLE;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions><ConformanceMode>true</ConformanceMode><LanguageStandard>stdcpp17</LanguageStandard><AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
+    <ClCompile><WarningLevel>Level4</WarningLevel><FunctionLevelLinking>true</FunctionLevelLinking><IntrinsicFunctions>true</IntrinsicFunctions><SDLCheck>true</SDLCheck><PreprocessorDefinitions>NOMINMAX;WIN32_LEAN_AND_MEAN;NDEBUG;_CONSOLE;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions><ConformanceMode>true</ConformanceMode><LanguageStandard>stdcpp17</LanguageStandard><AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\Common;$(ProjectDir)ThirdParty\sqlite;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories><AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
     <Link><SubSystem>Console</SubSystem><EnableCOMDATFolding>true</EnableCOMDATFolding><OptimizeReferences>true</OptimizeReferences><GenerateDebugInformation>true</GenerateDebugInformation><AdditionalDependencies>Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies></Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -29,6 +29,11 @@
     <ClCompile Include="Communication\PipeServer.cpp" /><ClCompile Include="Communication\SessionManager.cpp" /><ClCompile Include="Communication\SessionState.cpp" /><ClCompile Include="Jobs\JobManager.cpp" />
     <ClCompile Include="EngineBridge\EngineLoader.cpp" /><ClCompile Include="Cache\Cache.cpp" /><ClCompile Include="Events\EventQueue.cpp" /><ClCompile Include="Events\EventHistory.cpp" /><ClCompile Include="Security\PipeSecurity.cpp" /><ClCompile Include="Security\PolicyManager.cpp" /><ClCompile Include="Security\RateLimiter.cpp" />
     <ClCompile Include="ResourceControl\Throttle.cpp" /><ClCompile Include="Monitoring\Telemetry.cpp" /><ClCompile Include="Monitoring\Logger.cpp" />
+    <ClCompile Include="ThirdParty\sqlite\sqlite3.c">
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>false</SDLCheck>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;SQLITE_THREADSAFE=1;SQLITE_ENABLE_FTS5=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Common\Api\EngineApi.h" /><ClInclude Include="..\Common\Protocol\Protocol.h" /><ClInclude Include="..\Common\Protocol\Crc32.h" /><ClInclude Include="..\Common\Platform\WinUtil.h" />
@@ -36,6 +41,7 @@
     <ClInclude Include="Jobs\Job.h" /><ClInclude Include="Jobs\JobManager.h" />
     <ClInclude Include="EngineBridge\EngineLoader.h" /><ClInclude Include="Cache\Cache.h" /><ClInclude Include="Events\Event.h" /><ClInclude Include="Events\EventQueue.h" /><ClInclude Include="Events\EventHistory.h" /><ClInclude Include="Security\ClientIdentity.h" /><ClInclude Include="Security\PipeSecurity.h" /><ClInclude Include="Security\PolicyManager.h" /><ClInclude Include="Security\RateLimiter.h" />
     <ClInclude Include="ResourceControl\Throttle.h" /><ClInclude Include="Monitoring\Telemetry.h" /><ClInclude Include="Monitoring\Logger.h" />
+    <ClInclude Include="ThirdParty\sqlite\sqlite3.h" />
   </ItemGroup>
   <ItemGroup><ProjectReference Include="..\ScanEngine\ScanEngine.vcxproj"><Project>{2D6F7831-83C7-4B81-97F8-6CE4E43D38A1}</Project><LinkLibraryDependencies>false</LinkLibraryDependencies></ProjectReference></ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -11,6 +11,7 @@
     <Filter Include="08 - Shared"><UniqueIdentifier>{88888888-8888-8888-8888-888888888888}</UniqueIdentifier></Filter>
     <Filter Include="09 - Events"><UniqueIdentifier>{99999999-9999-9999-9999-999999999999}</UniqueIdentifier></Filter>
     <Filter Include="10 - Security"><UniqueIdentifier>{10101010-1010-1010-1010-101010101010}</UniqueIdentifier></Filter>
+    <Filter Include="11 - ThirdParty"><UniqueIdentifier>{11111111-2222-3333-4444-555555555555}</UniqueIdentifier></Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Startup\main.cpp"><Filter>01 - Startup</Filter></ClCompile>
@@ -32,6 +33,7 @@
     <ClCompile Include="..\Common\Protocol\Protocol.cpp"><Filter>08 - Shared</Filter></ClCompile>
     <ClCompile Include="..\Common\Protocol\Crc32.cpp"><Filter>08 - Shared</Filter></ClCompile>
     <ClCompile Include="..\Common\Platform\WinUtil.cpp"><Filter>08 - Shared</Filter></ClCompile>
+    <ClCompile Include="ThirdParty\sqlite\sqlite3.c"><Filter>11 - ThirdParty</Filter></ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Startup\ServiceApp.h"><Filter>01 - Startup</Filter></ClInclude>
@@ -56,5 +58,6 @@
     <ClInclude Include="..\Common\Protocol\Protocol.h"><Filter>08 - Shared</Filter></ClInclude>
     <ClInclude Include="..\Common\Protocol\Crc32.h"><Filter>08 - Shared</Filter></ClInclude>
     <ClInclude Include="..\Common\Platform\WinUtil.h"><Filter>08 - Shared</Filter></ClInclude>
+    <ClInclude Include="ThirdParty\sqlite\sqlite3.h"><Filter>11 - ThirdParty</Filter></ClInclude>
   </ItemGroup>
 </Project>
